@@ -1,0 +1,191 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font: 1em roboto, sans-serif;
+}
+
+/* Header Styling */
+header {
+  background-color: #051429;
+  width: 100%;
+  height: 70px;
+  padding: 19px;
+  font-size: 20px;
+  color: white;
+  position: fixed; /* Fix the header at the top */
+  top: 0;
+  left: 5;
+  z-index: 1000; /* Ensure it stays above other elements */
+}
+
+a {
+  text-decoration: none;
+  color: white;
+}
+.logout {
+  position: absolute;
+  float: right;
+  top: 10px;
+  right: 10px;
+}
+
+/* Sidebar Styling */
+aside {
+  text-align: center;
+  background-color: #133158;
+  color: white;
+  height: calc(100vh - 60px); /* Full height minus header */
+  padding: 17px;
+  gap: 40px;
+  position: fixed; /* Fix the sidebar on the left */
+  top: 60px;
+  left: 0;
+}
+
+ul {
+  list-style: none; /* Remove default list styling */
+  padding: 0;
+}
+
+ul li {
+  margin-bottom: 15px;
+}
+
+ul li a {
+  text-decoration: none;
+  color: white;
+  display: block;
+  padding: 10px;
+  background-color: #133158;
+  border-radius: 5px;
+}
+
+ul li a:hover {
+  background-color: #3498db;
+}
+
+/* Main Content Styling */
+main {
+  margin-left: 240px;
+  margin-top: 80px;
+  padding: 20px;
+  width: auto;
+}
+
+main input {
+  background-color: transparent;
+  border: 0;
+  outline: 0;
+}
+
+main .insights {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 25px;
+}
+
+main .insights > div {
+  background-color: #133158;
+  padding: var(--card-padding, 20px);
+  border-radius: 1rem;
+  margin-top: 1rem;
+  box-shadow: var(--box shadow, 0 4px 8px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+  color: #eeeeee;
+  font-size: bold;
+}
+
+main .attendanceTable {
+  margin-top: 20px;
+  display: grid;
+  gap: 25px;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table th,
+table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+table th {
+  background-color: #074799;
+  color: white;
+  font-weight: bold;
+}
+
+table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+table tr:hover {
+  background-color: #ddd;
+}
+
+.attendance-header {
+  display: flex;
+  justify-content: space-between; /* Align items to the left and right */
+  align-items: center; /* Vertically center the items */
+  margin-top: 25px;
+  margin-bottom: 10px; /* Add spacing below the header */
+}
+
+.attendance-header h2 {
+  margin: 0;
+  color: #074799;
+}
+
+.attendance-header .see-all {
+  text-decoration: none;
+  color: #074799;
+  font-weight: bold;
+  background-color: #f2f2f2;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.attendance-header .see-all:hover {
+  background-color: #ddd;
+}
+
+main .ReportsTable {
+  margin-top: 20px;
+  display: grid;
+  gap: 25px;
+  font-weight: bold;
+}
+
+.Reports-header {
+  display: flex;
+  justify-content: space-between; /* Align items to the left and right */
+  align-items: center; /* Vertically center the items */
+  margin-top: 25px;
+  margin-bottom: 10px; /* Add spacing below the header */
+}
+
+.Reports-header h2 {
+  margin: 0;
+  color: #074799;
+}
+
+.Reports-header .see-all {
+  text-decoration: none;
+  color: #074799;
+  font-weight: bold;
+  background-color: #f2f2f2;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.Reports-header .see-all:hover {
+  background-color: #ddd;
+}
