@@ -1,10 +1,75 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Dashboard</title>
   </head>
-  <body></body>
+  <body style="background-color: #D1DFF2; font-family: Arial, sans-serif;">
+    <div class="sidebar">
+      <style>
+        .sidebar {
+          width: 210px;
+          height: 100vh;
+          background-color: #074799;
+          color: white;
+          padding: 20px;
+          position: fixed;
+          display: flex;
+          flex-direction: column;
+          top: 0; 
+          left: 0; 
+        }
+        .sidebar h3 {
+          text-align: center;
+          margin-bottom: 100px; 
+          margin-top: 10px;    
+          padding: 10px;      
+
+        }
+        .sidebar-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 30px; 
+        }
+        .sidebar-buttons button {
+          margin-bottom: 10px;
+          padding: 10px;
+          background-color: #133158;
+          border: none;
+          color: white;
+          cursor: pointer;
+          border-radius: 8px; 
+        }
+        .sidebar-buttons button:hover {
+          background-color: #3498db;
+        }
+        .logout-button {
+          margin-top: 250px;
+          margin-bottom: 20px; 
+          padding: 10px;
+          background-color: #e74c3c;
+          border: none;
+          color: white;
+          cursor: pointer;
+          border-radius: 8px; 
+          gap: 10px;
+        }
+        .logout-button:hover {
+          background-color: #c0392b;
+        }
+      </style>
+      <h3>Archcube Payroll</h3>
+
+      <div class="sidebar-buttons">
+        <button class="dashboard-button">Dashboard</button>        
+        <button class="UserMangement-button">User Management</button>
+        <button class="btn btn-primary">Payroll Management</button>
+        <button class="btn btn-primary">Advance Payment</button>
+        <button class="btn btn-primary">Summary Report</button>
+        <button class="btn btn-primary">Setting</button>
+      </div>
+      <button class="logout-button">Logout</button>
+    </div>
+  </body>
 </html>
