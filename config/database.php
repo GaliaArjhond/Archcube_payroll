@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$dbname = 'audit';
+$dbname = 'archcubedb';
 $username = 'root';
 $password = 'admin';
 
