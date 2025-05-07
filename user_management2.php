@@ -15,22 +15,28 @@
         <a href="dashboard.html">Dashboard</a>
       </div>
       <div class="side_bar_item">
-        <a href="employee_management.html">Employee Management</a>
+        <a href="">Employee Management</a>
       </div>
       <div class="side_bar_item">
-        <a href="Attendance.html">Attendance</a>
+        <a href="">Attendance</a>
       </div>
       <div class="side_bar_item">
-        <a href="payroll.html">Payroll Management</a>
+        <a href="">Payroll Management</a>
       </div>
       <div class="side_bar_item">
-        <a href="reports.html">Summary Reports</a>
+        <a href="">Deductions & Benefits Management</a>
       </div>
       <div class="side_bar_item">
-        <a href="settings.html">Settings</a>
+        <a href="">Payslip Generator</a>
       </div>
       <div class="side_bar_item">
-        <a href="logout.html" class="logout">Log Out</a>
+        <a href="">Summary Reports</a>
+      </div>
+      <div class="side_bar_item">
+        <a href="">Settings</a>
+      </div>
+      <div class="side_bar_item">
+        <a href="" class="logout">Log Out</a>
       </div>
     </div>
   </div>

@@ -1,7 +1,7 @@
 <html lang="en">
 
 <head>
-    <link rel="stylesheet" href="assets/css/user_management_style.css" />
+    <link rel="stylesheet" href="assets/css/addempStyle.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Add Employee</title>
@@ -15,22 +15,28 @@
                 <a href="dashboard.html">Dashboard</a>
             </div>
             <div class="side_bar_item">
-                <a href="employee_management.html">Employee Management</a>
+                <a href="">Employee Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="Attendance.html">Attendance</a>
+                <a href="">Attendance</a>
             </div>
             <div class="side_bar_item">
-                <a href="payroll.html">Payroll Management</a>
+                <a href="">Payroll Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="reports.html">Summary Reports</a>
+                <a href="">Deductions & Benefits Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="settings.html">Settings</a>
+                <a href="">Payslip Generator</a>
             </div>
             <div class="side_bar_item">
-                <a href="logout.html" class="logout">Log Out</a>
+                <a href="">Summary Reports</a>
+            </div>
+            <div class="side_bar_item">
+                <a href="">Settings</a>
+            </div>
+            <div class="side_bar_item">
+                <a href="" class="logout">Log Out</a>
             </div>
         </div>
     </div>
@@ -95,6 +101,19 @@
             <label for="employee_dateHired">Date Hired:</label>
             <input type="date" id="employee_dateHired" name="employee_dateHired" required />
 
+            <h3>Compensation & Benefits</h3>
+
+            <label for="sss_number">SSS Number:</label>
+            <input type="text" id="sss_number" name="sss_number" required />
+
+            <label for="pagibig_number">Pag-IBIG MID Number:</label>
+            <input type="text" id="pagibig_number" name="pagibig_number" required />
+
+            <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
+            <input type="text" id="philhealth_pin" name="philhealth_pin" required />
+
+            <label for="tin_number">TIN:</label>
+            <input type="text" id="tin_number" name="tin_number" required />
 
             <button type="submit">Submit</button>
         </form>

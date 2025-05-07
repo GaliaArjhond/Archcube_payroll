@@ -43,7 +43,7 @@
 }
 
 .side_bar_item:hover {
-  background-color: #0563c1;
+  background-color: #0563c1; /* Highlight effect on hover */
 }
 
 .logout {
