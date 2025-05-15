@@ -98,22 +98,40 @@
                 <option value="terminated">Terminated</option>
             </select>
 
-            <label for="employee_dateHired">Date Hired:</label>
-            <input type="date" id="employee_dateHired" name="employee_dateHired" required />
+            <h3>Government Contributions</h3>
 
-            <h3>Compensation & Benefits</h3>
+            <label for="payroll_type">Payroll Type:</label>
+            <select id="payroll_type" name="payroll_type" required>
+                <option value="">-- Select Payroll Type --</option>
+                <option value="monthly">Monthly</option>
+                <option value="semi_monthly">Semi-Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="daily">Daily</option>
+            </select>
+
+            <label for="basic_salary">Basic Salary:</label>
+            <input type="text" id="basic_salary" name="basic_salary" required />
 
             <label for="sss_number">SSS Number:</label>
             <input type="text" id="sss_number" name="sss_number" required />
 
-            <label for="pagibig_number">Pag-IBIG MID Number:</label>
-            <input type="text" id="pagibig_number" name="pagibig_number" required />
+            <label for="sss_contribution">SSS Contribution:</label>
+            <input type="text" id="sss_contribution" name="sss_contribution" required />
 
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
             <input type="text" id="philhealth_pin" name="philhealth_pin" required />
 
+            <label for="philhealth_contribution">PhilHealth Contribution:</label>
+            <input type="text" id="philhealth_contribution" name="philhealth_contribution" required />
+
             <label for="tin_number">TIN:</label>
             <input type="text" id="tin_number" name="tin_number" required />
+
+            <label for="withholding_tax">Withholding Tax:</label>
+            <input type="text" id="withholding_tax" name="withholding_tax" required />
+
+            <label for="thirteenth_month">13th Month Pay:</label>
+            <input type="text" id="thirteenth_month" name="thirteenth_month" required />
 
             <button type="submit">Submit</button>
         </form>
