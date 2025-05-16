@@ -50,3 +50,117 @@
   color: #ff4d4d;
   font-weight: bold;
 }
+
+.main_content {
+  margin-left: 270px;
+  padding: 20px;
+}
+
+.main_content h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.payslip_table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.payslip_table th,
+.payslip_table td {
+  border: 1px solid #bfc9d1;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.payslip_table th {
+  background-color: #f2f6fa;
+  font-weight: normal;
+  color: #222;
+}
+
+.payslip_table tbody tr:nth-child(even) {
+  background-color: #f9fbfd;
+}
+
+.payslip_table tbody tr:hover {
+  background-color: #e6f0fa;
+}
+
+.payslip_table td {
+  vertical-align: middle;
+}
+
+.payslip_table th:first-child,
+.payslip_table td:first-child {
+  border-left: 2px solid #074799;
+}
+
+.payslip_table th:last-child,
+.payslip_table td:last-child {
+  border-right: 2px solid #074799;
+}
+
+.table_header th {
+  font-weight: bold;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 11px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(7, 71, 153, 0.08);
+}
+
+.btn-blue {
+  background: #074799;
+}
+
+.btn-blue:hover {
+  background: #0563c1;
+}
+
+.btn-green {
+  background: #28a745;
+}
+
+.btn-green:hover {
+  background: #218838;
+}
+
+.form-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  margin-top: 20px;
+}
+
+.pay-period-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pay-period-group label {
+  font-size: 15px;
+  margin-right: 4px;
+}
