@@ -42,20 +42,26 @@
   </div>
 
   <div class="main_content">
-    <div class="add_button">
-      <button class="add_employee_button">Add Employee</button>
-    </div>
-    <div class="search_bar">
-      <input type="text" placeholder="Search..." class="search_input" />
-      <button class="search_button">Search</button>
-    </div>
-    <div class="filter_section">
-      <label for="filter">Filter by:</label>
-      <select id="filter" class="filter_select">
-        <option value="all">All</option>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-      </select>
+    <div class="top_controls">
+      <div class="search_filter_group">
+        <div class="search_bar">
+          <input type="text" placeholder="Search..." class="search_input" />
+          <button class="search_button">Search</button>
+        </div>
+        <div class="filter_section">
+          <label for="filter">Filter by:</label>
+          <select id="filter" class="filter_select">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="add_button">
+        <a href="addEmp.php" class="add_employee_button">
+          Add Employee
+        </a>
+      </div>
     </div>
     <div class="table_section">
       <table class="data_table">

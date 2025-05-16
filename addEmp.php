@@ -1,3 +1,65 @@
+<?php
+require_once 'config/database.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        // Hash the default password (change as needed)
+        $defaultPassword = password_hash('changeme', PASSWORD_DEFAULT);
+
+        // Insert into employees table
+        $stmt = $pdo->prepare("INSERT INTO employees (
+            rfidCode, name, password, email, phoneNumber, birthDate, gender, civilStatusId, 
+            positionId, empStatusId, payrollTypeId, basicSalary, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+
+
+
+        $stmt->execute([
+            $_POST['employee_rfidCode'],
+            $_POST['employee_name'],
+            $defaultPassword,
+            $_POST['employee_email'],
+            $_POST['employee_contact'],
+            $_POST['employee_birthdate'],
+            $_POST['employee_gender'],
+            $_POST['employee_civil'],      // civilStatusId (int)
+            $_POST['employee_position'],   // positionId (int)
+            $_POST['employment_status'],   // empStatusId (int)
+            $_POST['payroll_type']         // payrollTypeId (int)
+        ]);
+
+        $employeeId = $pdo->lastInsertId();
+
+        // Insert government contributions
+        $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
+
+        $contributions = [
+            ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],            // SSS
+            ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],  // PhilHealth
+            ['type' => 3, 'number' => $_POST['pagibig_number'], 'amount' => $_POST['pagibig_contribution']],    // Pag-IBIG
+            ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],                                     // TIN
+            ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],                               // Withholding Tax
+            ['type' => 6, 'number' => '', 'amount' => $_POST['thirteenth_month']]                               // 13th Month Pay
+        ];
+
+        foreach ($contributions as $contribution) {
+            $stmt2->execute([
+                $employeeId,
+                $contribution['type'],
+                $contribution['number'],
+                $contribution['amount']
+            ]);
+        }
+
+        header("Location: user_management2.php");
+        exit();
+    } catch (PDOException $e) {
+        echo "Error: " . $e->getMessage();
+        exit();
+    }
+}
+?>
+
 <html lang="en">
 
 <head>
@@ -12,10 +74,10 @@
         <h1>Archcube Payroll</h1>
         <div class="side_bar_container">
             <div class="side_bar_item">
-                <a href="dashboard.html">Dashboard</a>
+                <a href="index.php">Dashboard</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Employee Management</a>
+                <a href="user_management2.php">Employee Management</a>
             </div>
             <div class="side_bar_item">
                 <a href="">Attendance</a>
@@ -43,34 +105,40 @@
 
     <div class="main_content">
         <h2>Add Employee</h2>
-        <form action="upload_image.php" method="post" enctype="multipart/form-data">
+        <form action="" method="post" enctype="multipart/form-data">
+            <img id="photoPreview" class="photo-preview" src="assets/img/default-user.png" alt="Photo Preview">
+
             <label for="employee_photo">Upload Photo:</label>
-            <input type="file" id="employee_photo" name="employee_photo" accept="image/*" required />
+            <input type="file" id="employee_photo" name="employee_photo" accept="image/*" onchange="previewPhoto(event)" />
 
             <h3>Personal Information</h3>
 
             <label for="employee_name">Employee Name:</label>
             <input type="text" id="employee_name" name="employee_name" required />
 
+            <label for="employee_rfidCode">RFID code:</label>
+            <input type="text" id="employee_rfidCode" name="employee_rfidCode" required />
+
             <label for="employee_gender">Gender:</label>
-            <select id="employee_gender" class="employee_gender">
+            <select id="employee_gender" class="employee_gender" name="employee_gender" required>
                 <option value="">-- Select Gender --</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
-            </select required>
+            </select>
 
             <label for="employee_birthdate">Birthdate:</label>
             <input type="date" id="employee_birthdate" name="employee_birthdate" required />
 
             <label for="employee_civil">Civil Status:</label>
-            <select id="employee_civil" class="employee_civil">
-                <option value="">-- Select Civil Status --</option>
-                <option value="single">Single</option>
-                <option value="married">Married</option>
-                <option value="divorced">Divorced</option>
-                <option value="widowed">Widowed</option>
-            </select required>
+            <select name="employee_civil" id="employee_civil" required>
+                <option value="">-- Select Status --</option>
+                <option value="1">Single</option>
+                <option value="2">Married</option>
+                <option value="3">Divorced</option>
+                <option value="4">Widowed</option>
+            </select>
+
 
             <label for="employee_contact">Contact Number:</label>
             <input type="text" id="employee_contact" name="employee_contact" required />
@@ -81,11 +149,14 @@
             <h3>Employment Information</h3>
 
             <label for="employee_position">Position:</label>
-            <select id="employee_position" class="employee_position">
-                <option value="">-- Select Position --</option>
-                <option value="architect">Architect</option>
-                <option value="engineer">Engineer</option>
-            </select required>
+            <select name="employee_position" id="employee_position" required>
+                <option value="">-- Select Status --</option>
+                <option value="1">Architect</option>
+                <option value="2">Engineer</option>
+                <option value="3">Foreman</option>
+                <option value="4">Laborer</option>
+            </select>
+
 
             <label for="employment_status">Employment Status*:</label>
             <select name="employment_status" id="employment_status" required>
@@ -101,41 +172,57 @@
             <h3>Government Contributions</h3>
 
             <label for="payroll_type">Payroll Type:</label>
-            <select id="payroll_type" name="payroll_type" required>
-                <option value="">-- Select Payroll Type --</option>
-                <option value="monthly">Monthly</option>
-                <option value="semi_monthly">Semi-Monthly</option>
-                <option value="weekly">Weekly</option>
-                <option value="daily">Daily</option>
+            <select name="payroll_type" id="payroll_type" required>
+                <option value="">-- Select Status --</option>
+                <option value="1">Monthly</option>
+                <option value="2">Semi-Monthly</option>
+                <option value="3">Weekly</option>
+                <option value="4">Daily</option>
             </select>
 
+
             <label for="basic_salary">Basic Salary:</label>
-            <input type="text" id="basic_salary" name="basic_salary" required />
+            <input type="text" value="" id="basic_salary" name="basic_salary" required />
 
             <label for="sss_number">SSS Number:</label>
-            <input type="text" id="sss_number" name="sss_number" required />
+            <input type="text" value="1" id="sss_number" name="sss_number" required />
 
             <label for="sss_contribution">SSS Contribution:</label>
-            <input type="text" id="sss_contribution" name="sss_contribution" required />
+            <input type="text" value="" id="sss_contribution" name="sss_contribution" required />
 
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
-            <input type="text" id="philhealth_pin" name="philhealth_pin" required />
+            <input type="text" value="2" id="philhealth_pin" name="philhealth_pin" required />
 
             <label for="philhealth_contribution">PhilHealth Contribution:</label>
-            <input type="text" id="philhealth_contribution" name="philhealth_contribution" required />
+            <input type="text" value="" id="philhealth_contribution" name="philhealth_contribution" required />
+
+            <label for="pagibig_number">Pag-IBIG Number:</label>
+            <input type="text" value="3" id="pagibig_number" name="pagibig_number" required />
+
+            <label for="pagibig_contribution">Pag-IBIG Contribution:</label>
+            <input type="text" value="" id="pagibig_contribution" name="pagibig_contribution" required />
 
             <label for="tin_number">TIN:</label>
-            <input type="text" id="tin_number" name="tin_number" required />
+            <input type="text" value="4" id="tin_number" name="tin_number" required />
 
             <label for="withholding_tax">Withholding Tax:</label>
-            <input type="text" id="withholding_tax" name="withholding_tax" required />
+            <input type="text" value="5" id="withholding_tax" name="withholding_tax" required />
 
             <label for="thirteenth_month">13th Month Pay:</label>
-            <input type="text" id="thirteenth_month" name="thirteenth_month" required />
+            <input type="text" value="6" id="thirteenth_month" name="thirteenth_month" required />
 
             <button type="submit">Submit</button>
         </form>
     </div>
+
+    <script>
+        function previewPhoto(event) {
+            const [file] = event.target.files;
+            if (file) {
+                document.getElementById('photoPreview').src = URL.createObjectURL(file);
+            }
+        }
+    </script>
 
 </body>
 

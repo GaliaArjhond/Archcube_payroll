@@ -80,7 +80,7 @@
                         <th>Net income</th>
                         <th>Action</th>
                     </tr>
-                </thead>
+                </thead class="table_body">
                 <tbody>
                     <tr>
 
