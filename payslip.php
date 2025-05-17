@@ -12,28 +12,28 @@
         <h1>Archcube Payroll</h1>
         <div class="side_bar_container">
             <div class="side_bar_item">
-                <a href="dashboard.html">Dashboard</a>
+                <a href="dashboard.php">Dashboard</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Employee Management</a>
+                <a href="user_management2.php">Employee Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Attendance</a>
+                <a href="attendance.php">Attendance</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Payroll Management</a>
+                <a href="Payroll_Mangement.php">Payroll Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Deductions & Benefits Management</a>
+                <a href="deduc&benefits.php">Deductions & Benefits Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Payslip Generator</a>
+                <a href="payslip.php">Payslip Generator</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Summary Reports</a>
+                <a href="reports.php">Summary Reports</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Settings</a>
+                <a href="setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
                 <a href="" class="logout">Log Out</a>

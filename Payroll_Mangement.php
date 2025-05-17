@@ -13,7 +13,7 @@
     <h1>Archcube Payroll</h1>
     <div class="side_bar_container">
       <div class="side_bar_item">
-        <a href="index.php">Dashboard</a>
+        <a href="dashboard.php">Dashboard</a>
       </div>
       <div class="side_bar_item">
         <a href="user_management2.php">Employee Management</a>

@@ -2,123 +2,64 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Payslip Generator</title>
+    <title>RFID Attendance</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        margin: 40px;
-        background-color: #f5f5f5;
+        background: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
-
-      .payslip-container {
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        width: 600px;
-        margin: auto;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-
-      h2 {
+      .container {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         text-align: center;
-        margin-bottom: 20px;
       }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
+      input[type="text"] {
+        font-size: 18px;
+        padding: 10px;
+        width: 250px;
+        margin-top: 10px;
       }
-
-      td,
-      th {
-        padding: 8px;
-        border: 1px solid #ccc;
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 20px;
+        background-color: #074799;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
       }
-
-      .totals {
-        font-weight: bold;
+      button:hover {
+        background-color: #0563c1;
       }
     </style>
   </head>
   <body>
-    <div class="payslip-container">
-      <h2>Employee Payslip - April 2025</h2>
-
-      <table>
-        <tr>
-          <th>Employee Name</th>
-          <td>John Doe</td>
-        </tr>
-        <tr>
-          <th>Employee ID</th>
-          <td>EMP123</td>
-        </tr>
-        <tr>
-          <th>Position</th>
-          <td>Site Engineer</td>
-        </tr>
-      </table>
-
-      <table>
-        <tr>
-          <th>Attendance</th>
-          <th>Days/Hours</th>
-        </tr>
-        <tr>
-          <td>Present Days</td>
-          <td>22</td>
-        </tr>
-        <tr>
-          <td>Absent Days</td>
-          <td>2</td>
-        </tr>
-        <tr>
-          <td>Late Days</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <td>Overtime Hours</td>
-          <td>10</td>
-        </tr>
-      </table>
-
-      <table>
-        <tr>
-          <th>Earnings</th>
-          <th>Amount (₱)</th>
-        </tr>
-        <tr>
-          <td>Basic Salary</td>
-          <td>₱25,000</td>
-        </tr>
-        <tr>
-          <td>Overtime Pay</td>
-          <td>₱1,500</td>
-        </tr>
-      </table>
-
-      <table>
-        <tr>
-          <th>Deductions</th>
-          <th>Amount (₱)</th>
-        </tr>
-        <tr>
-          <td>Late Penalty</td>
-          <td>₱200</td>
-        </tr>
-        <tr>
-          <td>Absences</td>
-          <td>₱1,800</td>
-        </tr>
-      </table>
-
-      <table>
-        <tr class="totals">
-          <td>Net Pay</td>
-          <td>₱24,500</td>
-        </tr>
-      </table>
+    <div class="container">
+      <h2>Scan Your RFID Tag</h2>
+      <form action="mark_attendance.php" method="POST">
+        <input
+          type="text"
+          name="rfid_tag"
+          id="rfid_input"
+          placeholder="Scan RFID..."
+          autofocus
+          required
+        />
+        <br />
+        <button type="submit">Submit</button>
+      </form>
     </div>
+
+    <script>
+      // Autofocus again after submitting
+      document.getElementById("rfid_input").focus();
+    </script>
   </body>
 </html>
