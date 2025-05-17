@@ -80,22 +80,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="user_management2.php">Employee Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Attendance</a>
+                <a href="attendance.php">Attendance</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Payroll Management</a>
+                <a href="Payroll_Mangement.php">Payroll Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Deductions & Benefits Management</a>
+                <a href="deduc&benefits.php">Deductions & Benefits Management</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Payslip Generator</a>
+                <a href="payslip.php">Payslip Generator</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Summary Reports</a>
+                <a href="reports.php">Summary Reports</a>
             </div>
             <div class="side_bar_item">
-                <a href="">Settings</a>
+                <a href="setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
                 <a href="" class="logout">Log Out</a>
@@ -182,34 +182,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             <label for="basic_salary">Basic Salary:</label>
-            <input type="text" value="" id="basic_salary" name="basic_salary" required />
+            <input type="text" id="basic_salary" name="basic_salary" required />
 
             <label for="sss_number">SSS Number:</label>
-            <input type="text" value="1" id="sss_number" name="sss_number" required />
+            <input type="text" id="sss_number" name="sss_number" required />
 
             <label for="sss_contribution">SSS Contribution:</label>
-            <input type="text" value="" id="sss_contribution" name="sss_contribution" required />
+            <input type="text" id="sss_contribution" name="sss_contribution" required />
 
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
-            <input type="text" value="2" id="philhealth_pin" name="philhealth_pin" required />
+            <input type="text" id="philhealth_pin" name="philhealth_pin" required />
 
             <label for="philhealth_contribution">PhilHealth Contribution:</label>
-            <input type="text" value="" id="philhealth_contribution" name="philhealth_contribution" required />
+            <input type="text" id="philhealth_contribution" name="philhealth_contribution" required />
 
             <label for="pagibig_number">Pag-IBIG Number:</label>
-            <input type="text" value="3" id="pagibig_number" name="pagibig_number" required />
+            <input type="text" id="pagibig_number" name="pagibig_number" required />
 
             <label for="pagibig_contribution">Pag-IBIG Contribution:</label>
-            <input type="text" value="" id="pagibig_contribution" name="pagibig_contribution" required />
+            <input type="text" id="pagibig_contribution" name="pagibig_contribution" required />
 
             <label for="tin_number">TIN:</label>
-            <input type="text" value="4" id="tin_number" name="tin_number" required />
+            <input type="text" id="tin_number" name="tin_number" required />
 
             <label for="withholding_tax">Withholding Tax:</label>
-            <input type="text" value="5" id="withholding_tax" name="withholding_tax" required />
+            <input type="text" id="withholding_tax" name="withholding_tax" required />
 
             <label for="thirteenth_month">13th Month Pay:</label>
-            <input type="text" value="6" id="thirteenth_month" name="thirteenth_month" required />
+            <input type="text" id="thirteenth_month" name="thirteenth_month" required />
 
             <button type="submit">Submit</button>
         </form>
