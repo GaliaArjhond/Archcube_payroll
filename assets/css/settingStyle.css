@@ -9,6 +9,11 @@ body {
   background: #f4f7fa;
 }
 
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .side_bar {
   width: 250px;
   position: fixed;
@@ -72,4 +77,108 @@ body {
   display: flex;
   flex-direction: column;
   gap: 28px;
+}
+
+/* --- Settings Panel Card Style --- */
+.settings_section {
+  background: #e6f0fa;
+  padding: 24px 0;
+}
+
+.settings_card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 0 auto 24px auto;
+  padding: 28px 32px;
+  max-width: 900px;
+  width: 100%;
+}
+
+.settings_card:not(:last-child) {
+  margin-bottom: 28px;
+}
+
+.settings_card_title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings_card_group {
+  border-top: 1px solid #e0e6ed;
+  padding-top: 18px;
+  margin-top: 10px;
+}
+
+.settings_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.settings_row:last-child {
+  border-bottom: none;
+}
+
+.settings_row_info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings_row_title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #222;
+}
+
+.settings_row_desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.settings_row_action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings_btn {
+  background: #00b3a4;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 7px 22px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settings_btn:hover {
+  background: #009688;
+}
+
+.settings_btn.danger {
+  background: #b91c1c;
+}
+
+.settings_btn.danger:hover {
+  background: #991b1b;
+}
+
+.settings_delete_title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #222;
 }
