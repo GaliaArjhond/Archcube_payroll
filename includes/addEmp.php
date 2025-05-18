@@ -170,8 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="terminated">Terminated</option>
             </select>
 
-            <h3>Government Contributions</h3>
-
             <label for="payroll_type">Payroll Type:</label>
             <select name="payroll_type" id="payroll_type" required>
                 <option value="">-- Select Status --</option>
@@ -184,6 +182,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <label for="basic_salary">Basic Salary:</label>
             <input type="text" id="basic_salary" name="basic_salary" required />
+
+            <h3>Government Contributions</h3>
 
             <label for="sss_number">SSS Number:</label>
             <input type="text" id="sss_number" name="sss_number" required />
