@@ -1,7 +1,7 @@
 <html lang="en">
 
 <head>
-  <link rel="stylesheet" href="assets/css/user_management_style.css" />
+  <link rel="stylesheet" href="../assets/css/user_management_style.css" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>User Management</title>
@@ -12,7 +12,7 @@
     <h1>Archcube Payroll</h1>
     <div class="side_bar_container">
       <div class="side_bar_item">
-        <a href="dashboard.php">Dashboard</a>
+        <a href="../includes/dashboard.php">Dashboard</a>
       </div>
       <div class="side_bar_item">
         <a href="user_management2.php">Employee Management</a>
