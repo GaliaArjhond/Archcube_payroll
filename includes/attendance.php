@@ -58,13 +58,35 @@
                             <?php for ($i = 1; $i <= 20; $i++) echo "<option value=\"$i\">$i</option>"; ?>
                         </select>
 
-                        <label for="ent_date">Date</label>
-                        <input type="date" name="ent_date" id="ent_date" required value="<?php echo date('Y-m-d'); ?>">
-                    </div>
+                        <div class="date_range_group">
+                            <label for="from_date">From</label>
+                            <input type="date" name="from_date" id="from_date">
+                            <label for="to_date">To</label>
+                            <input type="date" name="to_date" id="to_date">
+                        </div>
 
+                    </div>
                     <div class="right-group">
+
+                        <div class="view_group">
+                            <label for="view_select">View: </label>
+                            <input type="radio" id="view_all" name="view_select" value="all" checked>
+                            <label for="view_all">All</label>
+                            <input type="radio" id="view_today" name="view_select" value="today">
+                            <label for="view_today">Today</label>
+                            <input type="radio" id="view_week1" name="view_select" value="1_week">
+                            <label for="view_week1">1 Week</label>
+                            <input type="radio" id="view_week2" name="view_select" value="2_week">
+                            <label for="view_week2">2 Weeks</label>
+                            <input type="radio" id="view_month" name="view_select" value="month">
+                            <label for="view_month">Month</label>
+                            <input type="radio" id="view_year" name="view_select" value="year">
+                            <label for="view_year">Year</label>
+                        </div>
+
                         <label for="search_input">Search</label>
                         <input type="text" name="search_input" id="search_input" placeholder="Search by Employee ID or Name">
+
                     </div>
                 </div>
 

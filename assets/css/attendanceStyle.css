@@ -111,9 +111,16 @@ body {
 .tools_group {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.search_input {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .tools_group .left_group {
@@ -123,8 +130,16 @@ body {
   flex-wrap: wrap;
 }
 
+.left-group label,
+.right-group label {
+  font-weight: 600;
+}
+
 .tools_group .right_group {
-  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1 1 300px;
 }
 
 .tools_group #show_ent {
@@ -154,10 +169,11 @@ body {
   border: 1px solid #bfc9d1;
   border-radius: 5px;
   padding: 7px 12px;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 500;
   outline: none;
   transition: border 0.2s;
+  margin-top: 15px;
 }
 
 .tools_group #search_input::placeholder {
@@ -203,4 +219,70 @@ body {
 .data_table tbody tr:hover {
   background: #e6f0fa;
   transition: background 0.2s;
+}
+
+.view_select_group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f7fbff;
+  border-radius: 8px;
+  padding: 10px 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(7, 71, 153, 0.06);
+}
+
+.view_select_group label {
+  font-size: 15px;
+  color: #074799;
+  font-weight: 500;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.view_select_group input[type="radio"] {
+  accent-color: #074799;
+  margin-right: 4px;
+  margin-left: 10px;
+  transform: scale(1.1);
+}
+
+.date_range_group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 8px;
+  padding: 10px 18px;
+}
+
+.date_range_group label {
+  font-size: 15px;
+
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.date_range_group input[type="date"] {
+  background: #fff;
+  border: 1px solid #bfc9d1;
+  border-radius: 5px;
+  padding: 7px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.date_range_group input[type="date"]:focus {
+  border-color: #074799;
+  box-shadow: 0 0 0 2px #e3f0ff;
+}
+
+.right_group,
+.middle-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  margin: 0;
 }

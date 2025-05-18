@@ -350,7 +350,6 @@ select {
   transition: background 0.2s;
 }
 
-/* --- Make all forms (including attendance, govtContributions, etc.) card-like --- */
 .attendance_form,
 .govtContributions_form,
 .customDeduc_form,
