@@ -57,18 +57,20 @@
             </form>
         </div>
 
+        <H2>Attendance</H2>
         <div class="attendance_form">
-            <H2>Attendance</H2>
-            <label for="leave_input">Leave Credits</label>
-            <input type="number" id="leave_input" name="leave_input" placeholder="Enter leave credits" value="10" required>
-            <label for="lateMin_input">Lates (mins)</label>
-            <input type="number" id="lateMin_input" name="lateMin_input" placeholder="Enter late minutes" value="1" required>
-            <label for="absences_input">Absences (days)</label>
-            <input type="number" id="absences_input" name="absences_input" placeholder="Enter Absences days" value="1" required>
+            <div class="tools_input">
+                <label for="leave_input">Leave Credits</label>
+                <input type="number" id="leave_input" name="leave_input" placeholder="Enter leave credits" value="10" required>
+                <label for="lateMin_input">Lates (mins)</label>
+                <input type="number" id="lateMin_input" name="lateMin_input" placeholder="Enter late minutes" value="1" required>
+                <label for="absences_input">Absences (days)</label>
+                <input type="number" id="absences_input" name="absences_input" placeholder="Enter Absences days" value="1" required>
+            </div>
         </div>
 
+        <h2>Government Contributions</h2>
         <div class="govtContributions_form">
-            <h2>Government Contributions</h2>
             <div class="table_section">
                 <table class="data_table">
                     <tr>
@@ -81,19 +83,21 @@
             </div>
         </div>
 
+        <h2>Custom Deductions</h2>
         <div class="customDeduc_form">
-            <h2>Custom Deductions</h2>
-            <label for="deduc_type">Type</label>
-            <select id="deduc_type" name="deduc_type" required>
-                <option value="">Select Deduction Type</option>
-                <option value="loan">Loan</option>
-                <option value="insurance">Insurance</option>
-                <option value="tax">Tax</option>
-                <option value="other">Other</option>
-            </select>
-            <label for="deduc_amount">Amount</label>
-            <input type="number" id="deduc_amount" name="deduc_amount" placeholder="Enter deduction amount" required>
-            <button type="submit">Add deduction</button>
+            <div class="tools_input">
+                <label for="deduc_type">Type</label>
+                <select id="deduc_type" name="deduc_type" required>
+                    <option value="">Select Deduction Type</option>
+                    <option value="loan">Loan</option>
+                    <option value="insurance">Insurance</option>
+                    <option value="tax">Tax</option>
+                    <option value="other">Other</option>
+                </select>
+                <label for="deduc_amount">Amount</label>
+                <input type="number" id="deduc_amount" name="deduc_amount" placeholder="Enter deduction amount" required>
+                <button type="submit">Add deduction</button>
+            </div>
             <div class="table_section">
                 <table class="data_table">
                     <tr>

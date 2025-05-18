@@ -66,10 +66,303 @@ body {
   margin-left: 270px; /* Space for the sidebar */
   padding: 32px 40px;
   min-height: 100vh;
-  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.07);
   border-radius: 18px 0 0 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
+
+.select_employee {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  padding: 28px 32px;
+  font-size: 16px;
+  gap: 18px;
+  margin-bottom: 32px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.08);
+}
+
+.select_employee label {
+  font-size: 18px;
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.select_employee form {
+  display: flex;
+  align-items: center;
+  background-color: #f7fbff;
+  gap: 9px;
+}
+
+.select_employee,
+select {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #f7fbff;
+  font-size: 16px;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.select_employee select:focus {
+  border-color: #0563c1;
+  box-shadow: 0 0 0 2px #e3f0ff;
+}
+
+.select_employee button {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #074799;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(7, 71, 153, 0.08);
+}
+
+.attendance_form {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  gap: 18px;
+}
+
+.attendance_form h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.tools_input {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.tools_input label {
+  font-size: 16px;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.tools_input input[type="number"] {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border 0.2s, box-shadow 0.2s;
+  outline: none;
+  width: 120px;
+}
+
+.tools_input input[type="number"]:focus {
+  border-color: #0563c1;
+  box-shadow: 0 0 0 2px #e3f0ff;
+}
+
+.govtContributions_form {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  padding: 28px 32px;
+  gap: 18px;
+}
+
+.table_section {
+  width: 100%;
+  overflow-x: auto;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 0px;
+}
+
+.data_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: transparent;
+}
+
+.data_table th,
+.data_table td {
+  border: 1px solid #e0e6ed;
+  padding: 10px 8px;
+  text-align: center;
+  background: transparent;
+}
+
+.data_table th {
+  font-weight: 600;
+  background: #f2f6fa;
+}
+
+.data_table tbody tr:nth-child(even) {
+  background: #f9fbfd;
+}
+
+.data_table tbody tr:hover {
+  background: #e6f0fa;
+  transition: background 0.2s;
+}
+
+.customDeduc_form {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.08);
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  gap: 18px;
+  background: #fff;
+}
+
+.customDeduc_form h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2a4d69;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.customDeduc_form .tools_input {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  position: relative;
+}
+
+.customDeduc_form .tools_fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex: 1;
+}
+
+.customDeduc_form label {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  display: block;
+}
+
+.customDeduc_form .tools_field_group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 170px;
+}
+
+.customDeduc_form select,
+.customDeduc_form input[type="number"] {
+  border: 1.5px solid #bfc9d1;
+  border-radius: 7px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(7, 71, 153, 0.06);
+  width: 170px;
+  background: #fff;
+}
+
+.customDeduc_form select:focus,
+.customDeduc_form input[type="number"]:focus {
+  border-color: #074799;
+  box-shadow: 0 0 0 2px #e3f0ff;
+}
+
+.customDeduc_form .tools_button_group {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+.customDeduc_form button {
+  background: #074799;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.customDeduc_form button:hover {
+  background: #0563c1;
+}
+
+.customDeduc_form .table_section {
+  margin-top: 24px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.customDeduc_form .data_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: #fff;
+}
+
+.customDeduc_form .data_table th,
+.customDeduc_form .data_table td {
+  border: 1px solid #222;
+  padding: 10px 8px;
+  text-align: center;
+  background: #fff;
+}
+
+.customDeduc_form .data_table th {
+  font-weight: 600;
+  background: #f2f6fa;
+  color: #2a4d69;
+}
+
+.customDeduc_form .data_table tbody tr:nth-child(even) {
+  background: #f9fbfd;
+}
+
+.customDeduc_form .data_table tbody tr:hover {
+  background: #e6f0fa;
+  transition: background 0.2s;
+}
+
+/* --- Make all forms (including attendance, govtContributions, etc.) card-like --- */
+.attendance_form,
+.govtContributions_form,
+.customDeduc_form,
+.payrollSum_form {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.08);
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  gap: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- End Custom Deductions Table Section --- */
