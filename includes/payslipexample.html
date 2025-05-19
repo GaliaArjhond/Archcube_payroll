@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>RFID Attendance</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .container {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      input[type="text"] {
+        font-size: 18px;
+        padding: 10px;
+        width: 250px;
+        margin-top: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin-top: 20px;
+        background-color: #074799;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0563c1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Scan Your RFID Tag</h2>
+      <form action="mark_attendance.php" method="POST">
+        <input
+          type="text"
+          name="rfid_tag"
+          id="rfid_input"
+          placeholder="Scan RFID..."
+          autofocus
+          required
+        />
+        <br />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <script>
+      // Autofocus again after submitting
+      document.getElementById("rfid_input").focus();
+    </script>
+  </body>
+</html>
