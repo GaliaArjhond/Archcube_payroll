@@ -1,17 +1,28 @@
 <?php
-require_once '../config/database.php';
-
+$pdo = include '../config/database.php';
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Hash the default password (change as needed)
         $defaultPassword = password_hash('changeme', PASSWORD_DEFAULT);
 
-        // Insert into employees table
+        // Handle photo upload
+        $profileImage = null;
+        if (isset($_FILES['employee_photo']) && $_FILES['employee_photo']['error'] === UPLOAD_ERR_OK) {
+            $ext = pathinfo($_FILES['employee_photo']['name'], PATHINFO_EXTENSION);
+            $filename = uniqid('emp_', true) . '.' . $ext;
+            $uploadDir = '../uploads/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            move_uploaded_file($_FILES['employee_photo']['tmp_name'], $uploadDir . $filename);
+            $profileImage = 'uploads/' . $filename;
+        }
+
         $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCode, name, password, email, phoneNumber, birthDate, gender, civilStatusId, 
-            positionId, empStatusId, payrollTypeId, basicSalary, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            rfidCode, name, password, email, phoneNumber, birthDate, role, gender, hiredDate, basicSalary,
+            secQuesAnswer, secQuesId, civilStatusId, positionId, empStatusId, payrollTypeId, profileImage, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
 
 
@@ -22,11 +33,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['employee_email'],
             $_POST['employee_contact'],
             $_POST['employee_birthdate'],
+            $_POST['employee_role'] ?? 'admin', // Add a select for role in your form if needed
             $_POST['employee_gender'],
-            $_POST['employee_civil'],      // civilStatusId (int)
-            $_POST['employee_position'],   // positionId (int)
-            $_POST['employment_status'],   // empStatusId (int)
-            $_POST['payroll_type']         // payrollTypeId (int)
+            $_POST['basic_salary'],
+            $_POST['secQuesAnswer'] ?? null,   // Add to your form if needed
+            $_POST['secQuesId'] ?? null,       // Add to your form if needed
+            $_POST['employee_civil'],
+            $_POST['employee_position'],
+            $_POST['employment_status'],       // Should be integer ID
+            $_POST['payroll_type'],
+            $profileImage
         ]);
 
         $employeeId = $pdo->lastInsertId();
