@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout">Log Out</a>
             </div>
         </div>
     </div>
