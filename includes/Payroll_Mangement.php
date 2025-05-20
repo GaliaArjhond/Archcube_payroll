@@ -1,3 +1,13 @@
+<?php
+$pdo = include '../config/database.php';
+session_start();
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+  header('Location: ../index.php');
+  exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -37,7 +47,7 @@
         <a href="../includes/setting.php">Settings</a>
       </div>
       <div class="side_bar_item">
-        <a href="" class="logout">Log Out</a>
+        <a href="../includes/logout.php" class="logout">Log Out</a>
       </div>
     </div>
   </div>

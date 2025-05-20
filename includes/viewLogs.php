@@ -1,3 +1,29 @@
+<?php
+$pdo = include '../config/database.php';
+session_start();
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../index.php');
+    exit();
+}
+
+$sql = "SELECT 
+            l.logId,
+            u.username, 
+            a.actionName, 
+            l.timestamp
+        FROM systemLogs l
+        JOIN users u ON l.userId = u.userId
+        JOIN actionTypes a ON l.actionTypeId = a.actionTypeId
+        ORDER BY l.timestamp DESC";
+
+
+$stmt = $conn->query($sql);
+$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+
+
 <html lang="en">
 
 <head>
@@ -33,10 +59,10 @@
                 <a href="../includes/reports.php">Summary Reports</a>
             </div>
             <div class="side_bar_item">
-                <a href=../includes/setting.php">Settings</a>
+                <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout">Log Out</a>
             </div>
         </div>
     </div>
@@ -71,15 +97,20 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>User</th>
+                        <th>Username</th>
                         <th>Action</th>
-                        <th>Details</th>
                         <th>Timestamp</th>
-                        <th>Restore</th>
                     </tr>
                 </thead>
                 <tbody>
-
+                    <?php foreach ($logs as $log): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($log['logId']) ?></td>
+                            <td><?= htmlspecialchars($log['username']) ?></td>
+                            <td><?= htmlspecialchars($log['actionName']) ?></td>
+                            <td><?= htmlspecialchars($log['timestamp']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>

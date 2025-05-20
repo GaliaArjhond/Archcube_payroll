@@ -2,12 +2,17 @@
 $pdo = include '../config/database.php';
 session_start();
 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../index.php');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $defaultPassword = password_hash('changeme', PASSWORD_DEFAULT);
 
         // Handle photo upload
-        $profileImage = null;
+        $profileImage = 'uploads/default.png'; // default fallback
         if (isset($_FILES['employee_photo']) && $_FILES['employee_photo']['error'] === UPLOAD_ERR_OK) {
             $ext = pathinfo($_FILES['employee_photo']['name'], PATHINFO_EXTENSION);
             $filename = uniqid('emp_', true) . '.' . $ext;
@@ -19,12 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $profileImage = 'uploads/' . $filename;
         }
 
+        // Insert into employees
         $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCode, name, password, email, phoneNumber, birthDate, role, gender, hiredDate, basicSalary,
-            secQuesAnswer, secQuesId, civilStatusId, positionId, empStatusId, payrollTypeId, profileImage, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
-
-
+            rfidCode, name, password, email, phoneNumber, address, birthDate, role,
+            genderId, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
+            profileImage, createAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
         $stmt->execute([
             $_POST['employee_rfidCode'],
@@ -32,15 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $defaultPassword,
             $_POST['employee_email'],
             $_POST['employee_contact'],
+            $_POST['employee_address'],
             $_POST['employee_birthdate'],
-            $_POST['employee_role'] ?? 'admin', // Add a select for role in your form if needed
-            $_POST['employee_gender'],
+            $_POST['employee_role'] ?? 'admin',
+            $_POST['employee_gender'], // must be genderId
             $_POST['basic_salary'],
-            $_POST['secQuesAnswer'] ?? null,   // Add to your form if needed
-            $_POST['secQuesId'] ?? null,       // Add to your form if needed
             $_POST['employee_civil'],
             $_POST['employee_position'],
-            $_POST['employment_status'],       // Should be integer ID
+            $_POST['employment_status'],
             $_POST['payroll_type'],
             $profileImage
         ]);
@@ -51,12 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
 
         $contributions = [
-            ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],            // SSS
-            ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],  // PhilHealth
-            ['type' => 3, 'number' => $_POST['pagibig_number'], 'amount' => $_POST['pagibig_contribution']],    // Pag-IBIG
-            ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],                                     // TIN
-            ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],                               // Withholding Tax
-            ['type' => 6, 'number' => '', 'amount' => $_POST['thirteenth_month']]                               // 13th Month Pay
+            ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],
+            ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],
+            ['type' => 3, 'number' => $_POST['pagibig_number'], 'amount' => $_POST['pagibig_contribution']],
+            ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],
+            ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],
+            ['type' => 6, 'number' => '', 'amount' => $_POST['thirteenth_month']]
         ];
 
         foreach ($contributions as $contribution) {
@@ -75,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+
 ?>
 
 <html lang="en">
@@ -115,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout">Log Out</a>
             </div>
         </div>
     </div>
@@ -139,9 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_gender">Gender:</label>
             <select id="employee_gender" class="employee_gender" name="employee_gender" required>
                 <option value="">-- Select Gender --</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="1">Male</option>
+                <option value="2">Female</option>
+                <option value="3">Non-binary</option>
+                <option value="4">Prefer not to say</option>
+                <option value="5">Others</option>
             </select>
 
             <label for="employee_birthdate">Birthdate:</label>
@@ -178,12 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employment_status">Employment Status*:</label>
             <select name="employment_status" id="employment_status" required>
                 <option value="">-- Select Status --</option>
-                <option value="full_time">Full-Time</option>
-                <option value="part_time">Part-Time</option>
-                <option value="contractual">Contractual</option>
-                <option value="probationary">Probationary</option>
-                <option value="intern">Intern</option>
-                <option value="terminated">Terminated</option>
+                <option value="1">Full-Time</option>
+                <option value="2">Part-Time</option>
+                <option value="3">Contractual</option>
+                <option value="4">Probationary</option>
+                <option value="5">Intern</option>
+                <option value="6">Terminated</option>
             </select>
 
             <label for="payroll_type">Payroll Type:</label>
