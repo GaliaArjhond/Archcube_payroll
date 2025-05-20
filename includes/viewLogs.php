@@ -73,7 +73,6 @@
                         <th>ID</th>
                         <th>User</th>
                         <th>Action</th>
-                        <th>Details</th>
                         <th>Timestamp</th>
                         <th>Restore</th>
                     </tr>

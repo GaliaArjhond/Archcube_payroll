@@ -1,47 +1,41 @@
 <?php
 session_start();
-include('config/database.php');
+$conn = include('config/database.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $username = $_POST['username'];
-  $password = $_POST['password'];
+  $username = $_POST['username'] ?? '';
+  $password = $_POST['password'] ?? '';
 
   try {
-    // Check user credentials
-    $query = "SELECT * FROM users WHERE username = :username";
+    $query = "SELECT * FROM users WHERE username = :username AND role = 'admin'";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':username', $username);
     $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user['password'])) {
-      $_SESSION['username'] = $username;
-      $_SESSION['role'] = $user['role'];
+    if ($admin && password_verify($password, $admin['password'])) {
+      $_SESSION['username'] = $admin['username'];
+      $_SESSION['role'] = $admin['role'];
 
-      // Record the login time in the audit trail
       $login_time = date('Y-m-d H:i:s');
-      $log_query = "INSERT INTO audit_trail (username, action, timestamp) VALUES (:username, 'login', :timestamp)";
+      $log_query = "INSERT INTO systemLogs (employeeId, actionType, timestamp) VALUES (:employeeId, 'login', :timestamp)";
       $log_stmt = $conn->prepare($log_query);
-      $log_stmt->bindParam(':username', $username);
+      $log_stmt->bindParam(':employeeId', $admin['id']);
       $log_stmt->bindParam(':timestamp', $login_time);
       $log_stmt->execute();
 
-      // Redirect to the appropriate landing page based on role
-      if ($user['role'] == 'admin') {
-        header("Location: admin_landing.php");
-        exit;
-      } else {
-        header("Location: user_landing.php");
-        exit;
-      }
+      // Redirect to admin dashboard
+      header("Location: ../includes/dashboard.php");
+      exit;
     } else {
-      echo "<script>assets/js/showPopup('Invalid username or password!');</script>";
+      echo "<script>alert('Invalid admin credentials.');</script>";
     }
   } catch (PDOException $e) {
     echo "Error: " . $e->getMessage();
   }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
