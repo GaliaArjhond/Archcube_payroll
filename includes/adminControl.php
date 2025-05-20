@@ -1,6 +1,12 @@
 <?php
 $pdo = include '../config/database.php';
+session_start();
 $message = '';
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../index.php');
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {

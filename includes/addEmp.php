@@ -2,6 +2,11 @@
 $pdo = include '../config/database.php';
 session_start();
 
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../index.php');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $defaultPassword = password_hash('changeme', PASSWORD_DEFAULT);
@@ -180,12 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employment_status">Employment Status*:</label>
             <select name="employment_status" id="employment_status" required>
                 <option value="">-- Select Status --</option>
-                <option value="full_time">Full-Time</option>
-                <option value="part_time">Part-Time</option>
-                <option value="contractual">Contractual</option>
-                <option value="probationary">Probationary</option>
-                <option value="intern">Intern</option>
-                <option value="terminated">Terminated</option>
+                <option value="1">Full-Time</option>
+                <option value="2">Part-Time</option>
+                <option value="3">Contractual</option>
+                <option value="4">Probationary</option>
+                <option value="5">Intern</option>
+                <option value="6">Terminated</option>
             </select>
 
             <label for="payroll_type">Payroll Type:</label>

@@ -1,6 +1,11 @@
 <?php
+$pdo = include '../config/database.php';
 session_start();
-$conn = include('../config/database.php');
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header('Location: ../index.php');
+    exit();
+}
 
 $sql = "SELECT 
             l.logId,
