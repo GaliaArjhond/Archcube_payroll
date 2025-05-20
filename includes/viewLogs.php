@@ -2,33 +2,20 @@
 session_start();
 $conn = include('../config/database.php');
 
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do_restore'])) {
-    $restore_id = $_POST['restore_id'];
-    $name = $_POST['name'];
-    $position = $_POST['position'];
-    $salary = $_POST['salary'];
-
-    $stmt = $conn->prepare("INSERT INTO employees (employeeId, name, position, salary) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$restore_id, $name, $position, $salary]);
-
-    $actionTypeId = 1;
-    $logStmt = $conn->prepare("INSERT INTO systemLogs (employeeId, actionTypeId) VALUES (?, ?)");
-    $logStmt->execute([$restore_id, $actionTypeId]);
-}
-
-// Fetch logs
 $sql = "SELECT 
-            l.logId, l.timestamp, 
-            e.employeeId, e.name, e.position, e.salary,
-            a.actionType
+            l.logId,
+            u.username, 
+            a.actionName, 
+            l.timestamp
         FROM systemLogs l
-        JOIN employees e ON l.employeeId = e.employeeId
+        JOIN users u ON l.userId = u.userId
         JOIN actionTypes a ON l.actionTypeId = a.actionTypeId
         ORDER BY l.timestamp DESC";
 
+
 $stmt = $conn->query($sql);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 
@@ -67,10 +54,10 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <a href="../includes/reports.php">Summary Reports</a>
             </div>
             <div class="side_bar_item">
-                <a href=../includes/setting.php">Settings</a>
+                <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout">Log Out</a>
             </div>
         </div>
     </div>
@@ -105,35 +92,18 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>User</th>
+                        <th>Username</th>
                         <th>Action</th>
                         <th>Timestamp</th>
-                        <th>Restore</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($logs as $log): ?>
                         <tr>
-                            <td><?= $log['logId'] ?></td>
-                            <td><?= htmlspecialchars($log['actionType']) ?></td>
-                            <td><?= $log['employeeId'] ?></td>
-                            <td><?= htmlspecialchars($log['name']) ?></td>
-                            <td><?= htmlspecialchars($log['position']) ?></td>
-                            <td><?= number_format($log['salary'], 2) ?></td>
-                            <td><?= $log['timestamp'] ?></td>
-                            <td>
-                                <?php if ($log['actionType'] === 'DELETE'): ?>
-                                    <form method="POST" style="display:inline;">
-                                        <input type="hidden" name="restore_id" value="<?= $log['employeeId'] ?>">
-                                        <input type="hidden" name="name" value="<?= htmlspecialchars($log['name'], ENT_QUOTES) ?>">
-                                        <input type="hidden" name="position" value="<?= htmlspecialchars($log['position'], ENT_QUOTES) ?>">
-                                        <input type="hidden" name="salary" value="<?= $log['salary'] ?>">
-                                        <button type="submit" name="do_restore">Restore</button>
-                                    </form>
-                                <?php else: ?>
-                                    -
-                                <?php endif; ?>
-                            </td>
+                            <td><?= htmlspecialchars($log['logId']) ?></td>
+                            <td><?= htmlspecialchars($log['username']) ?></td>
+                            <td><?= htmlspecialchars($log['actionName']) ?></td>
+                            <td><?= htmlspecialchars($log['timestamp']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
