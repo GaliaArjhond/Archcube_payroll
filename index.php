@@ -17,14 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $_SESSION['username'] = $admin['username'];
       $_SESSION['role'] = $admin['role'];
 
-      $login_time = date('Y-m-d H:i:s');
-      $log_query = "INSERT INTO systemLogs (employeeId, actionType, timestamp) VALUES (:employeeId, 'login', :timestamp)";
-      $log_stmt = $conn->prepare($log_query);
-      $log_stmt->bindParam(':employeeId', $admin['id']);
-      $log_stmt->bindParam(':timestamp', $login_time);
-      $log_stmt->execute();
+      $systemlog_stmt = $conn->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (:userId, :actionTypeId, :timestamp)");
+      $actionTypeId = 1; // Assuming 1 = Login
+      $systemlog_stmt->bindParam(':userId', $admin['userId'], PDO::PARAM_INT);
+      $systemlog_stmt->bindParam(':actionTypeId', $actionTypeId);
+      $systemlog_stmt->bindParam(':timestamp', $login_time);
+      $systemlog_stmt->execute();
 
-      // Redirect to admin dashboard
       header("Location: ../includes/dashboard.php");
       exit;
     } else {

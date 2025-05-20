@@ -13,6 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("INSERT INTO users (username, password, role, secQuesId, secQuesAnswer, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
         $stmt->execute([$username, $password, $role, $secQuesId, $secQuesAnswer]);
 
+        $newUserId = $pdo->lastInsertId();
+
+        $actionTypeId = 16;
+        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+        $logStmt->execute([$newUserId, $actionTypeId]);
+
         $message = "Admin account created successfully.";
     } catch (PDOException $e) {
         $message = "Error: " . $e->getMessage();
