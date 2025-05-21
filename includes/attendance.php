@@ -173,105 +173,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                     </div>
                 </div>
 
-                <div class="table_section">
-                    <table class="data_table">
-                        <tr>
-                            <th>Date</th>
-                            <th>Employee ID</th>
-                            <th>Employee Name</th>
-                            <th>Position</th>
-                            <th>Check-In Time</th>
-                            <th>Status</th>
-                            <th class="no-print">Actions</th>
-                        </tr>
-
-                        <?php
-                        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-                        // Get filter values from GET or set defaults
-                        $show_ent = isset($_GET['show_ent']) ? (int)$_GET['show_ent'] : 10;
-                        $search = isset($_GET['search_input']) ? trim($_GET['search_input']) : '';
-                        $view = isset($_GET['view_select']) ? $_GET['view_select'] : 'all';
-                        $from_date = $_GET['from_date'] ?? '';
-                        $to_date = $_GET['to_date'] ?? '';
-
-                        // Build WHERE clause
-                        $where = [];
-                        $params = [];
-
-                        if ($search !== '') {
-                            $where[] = "(e.name LIKE ? OR e.employeeId LIKE ?)";
-                            $params[] = "%$search%";
-                            $params[] = "%$search%";
-                        }
-
-                        if ($view === 'today') {
-                            $where[] = "a.attendanceDate = CURDATE()";
-                        } elseif ($view === '1_week') {
-                            $where[] = "a.attendanceDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
-                        } elseif ($view === '2_week') {
-                            $where[] = "a.attendanceDate >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)";
-                        } elseif ($view === 'month') {
-                            $where[] = "MONTH(a.attendanceDate) = MONTH(CURDATE()) AND YEAR(a.attendanceDate) = YEAR(CURDATE())";
-                        } elseif ($view === 'year') {
-                            $where[] = "YEAR(a.attendanceDate) = YEAR(CURDATE())";
-                        }
-
-                        if ($from_date) {
-                            $where[] = "a.attendanceDate >= ?";
-                            $params[] = $from_date;
-                        }
-                        if ($to_date) {
-                            $where[] = "a.attendanceDate <= ?";
-                            $params[] = $to_date;
-                        }
-
-                        $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-                        $limitSql = $show_ent > 0 ? "LIMIT $show_ent" : '';
-
-                        $stmt = $pdo->prepare("
-                            SELECT a.*, e.name, p.positionName
-                            FROM attendance a
-                            JOIN employees e ON a.employeeId = e.employeeId
-                            LEFT JOIN position p ON e.positionId = p.positionId
-                            $whereSql
-                            ORDER BY a.attendanceDate DESC, a.timeIn DESC
-                            $limitSql
-                        ");
-                        $stmt->execute($params);
-
-                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                            // Determine status and row color
-                            if (!$row['timeIn'] && !$row['timeOut']) {
-                                $status = 'Absent';
-                                $rowClass = 'status-absent';
-                            } elseif ($row['timeIn'] && !$row['timeOut']) {
-                                $status = 'Checked In';
-                                $rowClass = 'status-in';
-                            } else {
-                                $status = 'Checked Out';
-                                $rowClass = 'status-out';
-                            }
-                            echo "<tr class=\"$rowClass\">";
-                            echo "<td>" . htmlspecialchars($row['attendanceDate']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['employeeId']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['positionName'] ?? 'N/A') . "</td>";
-                            echo "<td>" . htmlspecialchars($row['timeIn'] ?? '-') . "</td>";
-                            $status = $row['status'] ?? 'Absent';
-                            $statusClass = '';
-                            if ($status === 'On Time') $statusClass = 'status-ontime';
-                            elseif ($status === 'Late') $statusClass = 'status-late';
-                            elseif ($status === 'Absent') $statusClass = 'status-absent';
-
-                            echo "<td class=\"$statusClass\">" . htmlspecialchars($status) . "</td>";
-                            echo "<td class=\"no-print\"><a href=\"#\">Edit</a></td>";
-                            echo "</tr>";
-                        }
-                        ?>
-                    </table>
-                </div>
             </form>
+            <div class="table_section">
+                <table class="data_table">
+                    <tr>
+                        <th>Date</th>
+                        <th>Employee ID</th>
+                        <th>Employee Name</th>
+                        <th>Position</th>
+                        <th>Check-In Time</th>
+                        <th>Status</th>
+                        <th class="no-print">Actions</th>
+                    </tr>
+
+                    <?php
+                    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                    // Get filter values from GET or set defaults
+                    $show_ent = isset($_GET['show_ent']) ? (int)$_GET['show_ent'] : 10;
+                    $search = isset($_GET['search_input']) ? trim($_GET['search_input']) : '';
+                    $view = isset($_GET['view_select']) ? $_GET['view_select'] : 'all';
+                    $from_date = $_GET['from_date'] ?? '';
+                    $to_date = $_GET['to_date'] ?? '';
+
+                    // Build WHERE clause
+                    $where = [];
+                    $params = [];
+
+                    if ($search !== '') {
+                        $where[] = "(e.name LIKE ? OR e.employeeId LIKE ?)";
+                        $params[] = "%$search%";
+                        $params[] = "%$search%";
+                    }
+
+                    if ($view === 'today') {
+                        $where[] = "a.attendanceDate = CURDATE()";
+                    } elseif ($view === '1_week') {
+                        $where[] = "a.attendanceDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+                    } elseif ($view === '2_week') {
+                        $where[] = "a.attendanceDate >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)";
+                    } elseif ($view === 'month') {
+                        $where[] = "MONTH(a.attendanceDate) = MONTH(CURDATE()) AND YEAR(a.attendanceDate) = YEAR(CURDATE())";
+                    } elseif ($view === 'year') {
+                        $where[] = "YEAR(a.attendanceDate) = YEAR(CURDATE())";
+                    }
+
+                    if ($from_date) {
+                        $where[] = "a.attendanceDate >= ?";
+                        $params[] = $from_date;
+                    }
+                    if ($to_date) {
+                        $where[] = "a.attendanceDate <= ?";
+                        $params[] = $to_date;
+                    }
+
+                    $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+                    $limitSql = $show_ent > 0 ? "LIMIT $show_ent" : '';
+
+                    $stmt = $pdo->prepare("
+                        SELECT a.*, e.name, p.positionName
+                        FROM attendance a
+                        JOIN employees e ON a.employeeId = e.employeeId
+                        LEFT JOIN position p ON e.positionId = p.positionId
+                        $whereSql
+                        ORDER BY a.attendanceDate DESC, a.timeIn DESC
+                        $limitSql
+                    ");
+                    $stmt->execute($params);
+
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        // Determine status and row color
+                        if (!$row['timeIn'] && !$row['timeOut']) {
+                            $status = 'Absent';
+                            $rowClass = 'status-absent';
+                        } elseif ($row['timeIn'] && !$row['timeOut']) {
+                            $status = 'Checked In';
+                            $rowClass = 'status-in';
+                        } else {
+                            $status = 'Checked Out';
+                            $rowClass = 'status-out';
+                        }
+                        echo "<tr class=\"$rowClass\">";
+                        echo "<td>" . htmlspecialchars($row['attendanceDate']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['employeeId']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['positionName'] ?? 'N/A') . "</td>";
+                        echo "<td>" . htmlspecialchars($row['timeIn'] ?? '-') . "</td>";
+                        $status = $row['status'] ?? 'Absent';
+                        $statusClass = '';
+                        if ($status === 'On Time') $statusClass = 'status-ontime';
+                        elseif ($status === 'Late') $statusClass = 'status-late';
+                        elseif ($status === 'Absent') $statusClass = 'status-absent';
+
+                        echo "<td class=\"$statusClass\">" . htmlspecialchars($status) . "</td>";
+                        echo "<td class=\"no-print\"><a href=\"#\">Edit</a></td>";
+                        echo "</tr>";
+                    }
+                    ?>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -280,6 +280,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
         <span id="popupText"></span>
         <button class="popup-close">OK</button>
     </div>
+
+    <script src="../assets/js/attendance.js"></script>
 </body>
 
 </html>

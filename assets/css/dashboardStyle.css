@@ -89,3 +89,95 @@ body {
 .dashboard-notification > div {
   margin-bottom: 8px;
 }
+
+/* Add to dashboardStyle.css */
+.card_container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+  margin-top: 24px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(7, 71, 153, 0.08);
+  padding: 18px 16px 14px 16px; /* reduced padding */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* less gap */
+  min-height: 100px; /* less height */
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.16);
+}
+
+.card h2 {
+  font-size: 1.08em; /* smaller heading */
+  margin-bottom: 4px;
+}
+
+.card p,
+.card ul,
+.card span {
+  font-size: 0.98em; /* smaller text */
+}
+
+.card ul {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.card ul li {
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95%;
+  list-style: disc inside;
+}
+
+.card span {
+  color: #888;
+  font-size: 0.98em;
+}
+
+.card a {
+  color: #0563c1;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.card a:hover {
+  color: #074799;
+  text-decoration: underline;
+}
+
+.card.chart-card {
+  grid-column: span 1 !important;
+  min-width: 0;
+  min-height: 160px;
+  max-width: 420px;
+  padding: 18px 14px 14px 14px;
+  background: #fff;
+  color: #074799;
+  align-items: center;
+  justify-content: center;
+}
+
+.card.chart-card h2 {
+  font-size: 1.08em;
+  margin-bottom: 8px;
+  color: #074799;
+  text-align: center;
+}
+
+.card.chart-card canvas {
+  width: 240px !important;
+  height: 150px !important;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+}
