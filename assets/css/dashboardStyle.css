@@ -66,7 +66,6 @@ body {
   margin-left: 270px; /* Space for the sidebar */
   padding: 32px 40px;
   min-height: 100vh;
-  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.07);
   border-radius: 18px 0 0 0;
   overflow-y: auto;
   display: flex;
