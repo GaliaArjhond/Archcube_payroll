@@ -286,3 +286,76 @@ body {
   width: 100%;
   margin: 0;
 }
+
+tr.status-absent {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+tr.status-in {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+tr.status-out {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-ontime {
+  color: #219653;
+  font-weight: bold;
+  background: #eafaf1;
+  border-radius: 4px;
+}
+
+.status-late {
+  color: #f2994a;
+  font-weight: bold;
+  background: #fff6e5;
+  border-radius: 4px;
+}
+
+.status-absent {
+  color: #c0392b;
+  font-weight: bold;
+  background: #fdeaea;
+  border-radius: 4px;
+}
+
+/* Centered popup message */
+.popup-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  color: #222;
+  padding: 32px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(7, 71, 153, 0.18);
+  z-index: 9999;
+  text-align: center;
+  min-width: 300px;
+  font-size: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.popup-close {
+  background: #074799;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 24px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 auto;
+  transition: background 0.2s;
+}
+
+.popup-close:hover {
+  background: #0563c1;
+}
