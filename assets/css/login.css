@@ -29,6 +29,7 @@ footer {
 
 a {
   color: white;
+  text-decoration: none;
 }
 
 picture {
@@ -116,4 +117,24 @@ button {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   cursor: pointer;
+}
+
+.empAttendance {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.empAttendance a {
+  display: inline-block;
+  background-color: #2176bd;
+  color: #fff;
+  padding: 12px 32px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.empAttendance a:hover {
+  background-color: #155a8a;
 }

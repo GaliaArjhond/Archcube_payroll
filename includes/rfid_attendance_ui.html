@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Employee Attendance</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+
+  <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md text-center">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800">
+        RFID Attendance System
+      </h2>
+      <form id="rfidForm" autocomplete="off">
+        <input
+          type="text"
+          id="rfidInput"
+          name="rfid_code"
+          placeholder="Tap RFID card or enter code manually"
+          class="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          autofocus
+          required
+        />
+        <button
+          type="submit"
+          class="bg-blue-600 text-white w-full py-2 rounded-xl hover:bg-blue-700 transition duration-200"
+        >
+          Submit Attendance
+        </button>
+      </form>
+      <p class="text-sm text-gray-500 mt-4">
+        No card? Enter RFID code manually.
+      </p>
+    </div>
+
+    <script>
+      const form = document.getElementById("rfidForm");
+      const input = document.getElementById("rfidInput");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const rfidCode = input.value.trim();
+        if (!rfidCode) return;
+
+        fetch("employeeAttendance.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `rfid_code=${encodeURIComponent(rfidCode)}`,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            Swal.fire({
+              title: data.success ? "Attendance Recorded" : "Error",
+              text:
+                data.message ||
+                (data.success ? "Welcome!" : "RFID not recognized."),
+              icon: data.success ? "success" : "error",
+              confirmButtonText: "OK",
+              allowOutsideClick: false,
+            }).then(() => {
+              if (data.success) form.reset();
+              input.focus();
+            });
+          })
+          .catch(() => {
+            Swal.fire({
+              title: "Server Error",
+              text: "Unable to submit attendance. Try again.",
+              icon: "error",
+            });
+          });
+      });
+
+      window.onload = () => input.focus();
+    </script>
+  </body>
+</html>

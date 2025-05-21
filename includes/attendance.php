@@ -129,7 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 <div class="download_group">
                     <button type="submit" name="download_attendance" class="download_button">Download Attendance</button>
                     <button type="button" onclick="printAttendance()" class="download_button">Print Attendance</button>
-                    <script src="../assets/js/attendance.js"></script>
                     <a href="../includes/schedule.php">Edit Schedule</a>
                 </div>
 
