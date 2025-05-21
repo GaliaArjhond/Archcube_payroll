@@ -2,6 +2,9 @@
 $pdo = include '../config/database.php';
 session_start();
 
+$errorMsg = '';
+$successMsg = '';
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
@@ -26,21 +29,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert into employees
         $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCode, name, password, email, phoneNumber, address, birthDate, role,
-            genderId, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
+            rfidCode, name, email, phoneNumber, address, birthDate, role,
+            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
             profileImage, createAt, updatedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
         $stmt->execute([
             $_POST['employee_rfidCode'],
             $_POST['employee_name'],
-            $defaultPassword,
             $_POST['employee_email'],
             $_POST['employee_contact'],
             $_POST['employee_address'],
             $_POST['employee_birthdate'],
             $_POST['employee_role'] ?? 'admin',
-            $_POST['employee_gender'], // must be genderId
+            $_POST['employee_gender'],
+            $_POST['hired_date'],
             $_POST['basic_salary'],
             $_POST['employee_civil'],
             $_POST['employee_position'],
@@ -53,16 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert government contributions
         $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
-
         $contributions = [
             ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],
             ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],
             ['type' => 3, 'number' => $_POST['pagibig_number'], 'amount' => $_POST['pagibig_contribution']],
             ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],
             ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],
-            ['type' => 6, 'number' => '', 'amount' => $_POST['thirteenth_month']]
         ];
-
         foreach ($contributions as $contribution) {
             $stmt2->execute([
                 $employeeId,
@@ -72,14 +72,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        header("Location: user_management2.php");
-        exit();
+        $actionTypeId = 3;
+        if (!isset($_SESSION['userId']) || empty($_SESSION['userId'])) {
+            $errorMsg = "Error: User ID missing in session. Cannot log action.";
+        } else {
+            try {
+                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                $logStmt->execute([$_SESSION['userId'], $actionTypeId]);
+            } catch (PDOException $e) {
+                $errorMsg = "Log Insert Error: " . $e->getMessage();
+            }
+        }
+
+        $successMsg = "Employee added successfully!";
     } catch (PDOException $e) {
-        echo "Error: " . $e->getMessage();
-        exit();
+        $errorMsg = $e->getMessage();
     }
 }
-
 ?>
 
 <html lang="en">
@@ -170,7 +179,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_email">Email:</label>
             <input type="text" id="employee_email" name="employee_email" required />
 
+            <label for="employee_address">Address:</label>
+            <input type="text" id="employee_address" name="employee_address" required />
+
             <h3>Employment Information</h3>
+
+            <label for="hired_date">Hired Date:</label>
+            <input type="date" id="hired_date" name="hired_date" value="<?php echo date('Y-m-d'); ?>" required />
+
+            <label for="employee_role">Role:</label>
+            <select name="employee_role" id="employee_role">
+                <option value="">-- Select Role --</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </select>
 
             <label for="employee_position">Position:</label>
             <select name="employee_position" id="employee_position" required>
@@ -204,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             <label for="basic_salary">Basic Salary:</label>
-            <input type="text" id="basic_salary" name="basic_salary" required />
+            <input type="number" id="basic_salary" name="basic_salary" step="0.01" required />
 
             <h3>Government Contributions</h3>
 
@@ -232,18 +254,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="withholding_tax">Withholding Tax:</label>
             <input type="text" id="withholding_tax" name="withholding_tax" required />
 
-            <label for="thirteenth_month">13th Month Pay:</label>
-            <input type="text" id="thirteenth_month" name="thirteenth_month" required />
-
             <button type="submit">Submit</button>
         </form>
+
+        <?php if ($errorMsg): ?>
+            <div class="alert error-alert">
+                <strong>Error:</strong> <?php echo htmlspecialchars($errorMsg); ?>
+            </div>
+        <?php endif; ?>
+        <?php if ($successMsg): ?>
+            <div class="alert success-alert">
+                <strong>Success:</strong> <?php echo htmlspecialchars($successMsg); ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <script>
         function previewPhoto(event) {
-            const [file] = event.target.files;
-            if (file) {
-                document.getElementById('photoPreview').src = URL.createObjectURL(file);
+            try {
+                const [file] = event.target.files;
+                if (file) {
+                    document.getElementById('photoPreview').src = URL.createObjectURL(file);
+                }
+            } catch (error) {
+                alert('Failed to preview photo: ' + error.message);
             }
         }
     </script>
