@@ -280,28 +280,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
     </div>
 
-    <script>
-        function previewPhoto(event) {
-            try {
-                const [file] = event.target.files;
-                if (file) {
-                    document.getElementById('photoPreview').src = URL.createObjectURL(file);
-                }
-            } catch (error) {
-                alert('Failed to preview photo: ' + error.message);
-            }
-        }
-
-        <?php if ($successMsg): ?>
-            window.onload = function() {
-                alert("<?php echo addslashes($successMsg); ?>");
-            }
-        <?php endif; ?>
-
-        function confirmLogout() {
-            return confirm('Are you sure you want to log out?');
-        }
-    </script>
+    <?php if ($successMsg): ?>
+        <script>
+            window.successMsg = "<?= addslashes($successMsg) ?>";
+        </script>
+    <?php endif; ?>
+    <script src="../assets/js/addEmp.js"></script>
 
 </body>
 

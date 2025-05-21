@@ -1,11 +1,18 @@
 <?php
-date_default_timezone_set('Asia/Manila'); // or your local timezone
+date_default_timezone_set('Asia/Manila');
 $pdo = include '../config/database.php';
 session_start();
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
 }
+
+// Get filter values from GET or set defaults
+$show_ent = isset($_GET['show_ent']) ? (int)$_GET['show_ent'] : 10;
+$search = isset($_GET['search_input']) ? trim($_GET['search_input']) : '';
+$view = isset($_GET['view_select']) ? $_GET['view_select'] : 'all';
+$from_date = $_GET['from_date'] ?? '';
+$to_date = $_GET['to_date'] ?? '';
 
 $popupMessage = null; // Initialize popup message variable
 
@@ -117,11 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     <div class="main_content">
         <h2>Attendance Management</h2>
         <div class="attendance_form">
-            <form method="post">
+            <form method="get" id="attendanceForm">
 
                 <div class="download_group">
                     <button type="submit" name="download_attendance" class="download_button">Download Attendance</button>
-                    <button type="submit" name="print_attendance" class="download_button">Print Attendance</button>
+                    <button type="button" onclick="printAttendance()" class="download_button">Print Attendance</button>
+                    <script src="../assets/js/attendance.js"></script>
                     <a href="../includes/schedule.php">Edit Schedule</a>
                 </div>
 
@@ -129,14 +137,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                     <div class="left-group">
                         <label for="show_ent">Show</label>
                         <select name="show_ent" id="show_ent">
-                            <?php for ($i = 1; $i <= 20; $i++) echo "<option value=\"$i\">$i</option>"; ?>
+                            <?php for ($i = 1; $i <= 20; $i++): ?>
+                                <option value="<?= $i ?>" <?= $show_ent == $i ? 'selected' : '' ?>><?= $i ?></option>
+                            <?php endfor; ?>
                         </select>
 
                         <div class="date_range_group">
                             <label for="from_date">From</label>
-                            <input type="date" name="from_date" id="from_date">
+                            <input type="date" name="from_date" id="from_date" value="<?= htmlspecialchars($from_date) ?>">
                             <label for="to_date">To</label>
-                            <input type="date" name="to_date" id="to_date">
+                            <input type="date" name="to_date" id="to_date" value="<?= htmlspecialchars($to_date) ?>">
                         </div>
 
                     </div>
@@ -144,26 +154,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
 
                         <div class="view_group">
                             <label for="view_select">View: </label>
-                            <input type="radio" id="view_all" name="view_select" value="all" checked>
+                            <input type="radio" id="view_all" name="view_select" value="all" <?= $view == 'all' ? 'checked' : '' ?>>
                             <label for="view_all">All</label>
-                            <input type="radio" id="view_today" name="view_select" value="today">
+                            <input type="radio" id="view_today" name="view_select" value="today" <?= $view == 'today' ? 'checked' : '' ?>>
                             <label for="view_today">Today</label>
-                            <input type="radio" id="view_week1" name="view_select" value="1_week">
+                            <input type="radio" id="view_week1" name="view_select" value="1_week" <?= $view == '1_week' ? 'checked' : '' ?>>
                             <label for="view_week1">1 Week</label>
-                            <input type="radio" id="view_week2" name="view_select" value="2_week">
+                            <input type="radio" id="view_week2" name="view_select" value="2_week" <?= $view == '2_week' ? 'checked' : '' ?>>
                             <label for="view_week2">2 Weeks</label>
-                            <input type="radio" id="view_month" name="view_select" value="month">
+                            <input type="radio" id="view_month" name="view_select" value="month" <?= $view == 'month' ? 'checked' : '' ?>>
                             <label for="view_month">Month</label>
-                            <input type="radio" id="view_year" name="view_select" value="year">
+                            <input type="radio" id="view_year" name="view_select" value="year" <?= $view == 'year' ? 'checked' : '' ?>>
                             <label for="view_year">Year</label>
                         </div>
 
                         <label for="search_input">Search</label>
-                        <input type="text" name="search_input" id="search_input" placeholder="Search by Employee ID or Name">
+                        <input type="text" name="search_input" id="search_input" placeholder="Search by Employee ID or Name" value="<?= htmlspecialchars($search) ?>">
 
                     </div>
                 </div>
-
 
                 <div class="table_section">
                     <table class="data_table">
@@ -174,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                             <th>Position</th>
                             <th>Check-In Time</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="no-print">Actions</th>
                         </tr>
 
                         <?php
@@ -257,17 +266,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                             elseif ($status === 'Absent') $statusClass = 'status-absent';
 
                             echo "<td class=\"$statusClass\">" . htmlspecialchars($status) . "</td>";
-                            echo "<td><a href='#'>Edit</a></td>";
+                            echo "<td class=\"no-print\"><a href=\"#\">Edit</a></td>";
                             echo "</tr>";
                         }
                         ?>
                     </table>
                 </div>
-
-                <!-- Add this inside your attendance form -->
-                <label for="rfidCode">Scan RFID Card:</label>
-                <input type="text" id="rfidCode" name="rfidCode" autofocus autocomplete="off" />
-
             </form>
         </div>
     </div>
@@ -275,42 +279,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     <!-- Add this near the top of your <body> -->
     <div id="popupMessage" class="popup-message" style="display:none;">
         <span id="popupText"></span>
-        <button onclick="closePopup()" class="popup-close">OK</button>
+        <button class="popup-close">OK</button>
     </div>
-
-    <script>
-        document.getElementById('rfidCode').addEventListener('input', function() {
-            if (this.value.length >= 10) { // Adjust length as needed for your RFID UIDs
-                this.form.submit();
-            }
-        });
-
-        function showPopup(message) {
-            document.getElementById('popupText').textContent = message;
-            document.getElementById('popupMessage').style.display = 'flex';
-        }
-
-        function closePopup() {
-            document.getElementById('popupMessage').style.display = 'none';
-        }
-
-        // Show popup message if exists
-        <?php if ($popupMessage): ?>
-            showPopup("<?php echo addslashes($popupMessage); ?>");
-        <?php endif; ?>
-    </script>
-    <?php if ($popupMessage): ?>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                showPopup("<?= $popupMessage ?>");
-            });
-        </script>
-    <?php endif; ?>
-    <script>
-        function confirmLogout() {
-            return confirm('Are you sure you want to log out?');
-        }
-    </script>
 </body>
 
 </html>
