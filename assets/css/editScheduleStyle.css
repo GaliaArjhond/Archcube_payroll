@@ -1,0 +1,260 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+}
+
+body {
+  background: #f4f7fa;
+}
+
+.side_bar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: linear-gradient(180deg, #074799 80%, #0563c1 100%);
+  color: white;
+  height: 100vh;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(7, 71, 153, 0.08);
+}
+
+.side_bar h1 {
+  font-size: 26px;
+  margin-bottom: 28px;
+  text-align: center;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.side_bar_container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side_bar_item {
+  padding: 12px 18px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 10px;
+}
+
+.side_bar_item a {
+  text-decoration: none;
+  color: white;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side_bar_item:hover {
+  background: #05509a;
+  color: #fff;
+}
+
+.logout {
+  color: #ff4d4d;
+  font-weight: bold;
+}
+
+.main_content {
+  margin-left: 270px; /* Space for the sidebar */
+  padding: 32px 40px;
+  min-height: 100vh;
+  border-radius: 18px 0 0 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* --- Schedule Management Main Content --- */
+.main_content h2,
+.main_content h3 {
+  color: #074799;
+  margin-bottom: 18px;
+  font-weight: 700;
+}
+
+form {
+  background: #fff;
+  padding: 24px 28px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(7, 71, 153, 0.09);
+  margin-bottom: 40px;
+  max-width: 600px;
+}
+
+form label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  color: #074799;
+  font-weight: 500;
+}
+
+form input[type="text"],
+form input[type="time"],
+form select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #b3c6e0;
+  border-radius: 5px;
+  font-size: 1em;
+  background: #f4f7fa;
+  margin-bottom: 8px;
+}
+
+form select[multiple] {
+  height: 90px;
+}
+
+form button {
+  background: linear-gradient(90deg, #074799 80%, #0563c1 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 5px;
+  font-size: 1em;
+  margin-top: 18px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.07);
+}
+
+form button:hover {
+  background: #034b7a;
+  color: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+table th,
+table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+table th {
+  background: linear-gradient(90deg, #074799 80%, #0563c1 100%);
+  color: #fff;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+table tr:last-child td {
+  border-bottom: none;
+}
+
+table tr:hover {
+  background: #eaf2fb;
+  transition: background 0.2s;
+}
+
+table tr.selected {
+  background: #d6e6fa;
+}
+
+a {
+  color: #074799;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #0563c1;
+}
+
+#workDaysRange label,
+.workDays-radio label {
+  display: inline-block;
+  background: #f4f7fa;
+  border: 1px solid #b3c6e0;
+  border-radius: 5px;
+  padding: 7px 14px;
+  margin: 4px 6px 4px 0;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  font-size: 1em;
+}
+
+#workDaysRange input[type="checkbox"],
+.workDays-radio input[type="radio"] {
+  accent-color: #074799;
+  margin-right: 6px;
+}
+
+/* Hover effect on work days labels */
+#workDaysRange label:hover,
+.workDays-radio label:hover {
+  background: #e0e6ed;
+  border-color: #074799;
+}
+
+/* Focus outlines for accessibility */
+button:focus,
+a:focus {
+  outline: 3px solid #074799;
+  outline-offset: 2px;
+}
+
+/* --- Responsive: Stack Form Labels and Inputs --- */
+@media (max-width: 600px) {
+  form label,
+  form input,
+  form select,
+  form button {
+    width: 100%;
+    display: block;
+  }
+  form input,
+  form select {
+    margin-bottom: 16px;
+  }
+  #workDaysRange label {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  form {
+    padding: 16px 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .side_bar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .main_content {
+    margin-left: 0;
+    padding: 16px;
+  }
+  form {
+    max-width: 100%;
+    padding: 16px 20px;
+  }
+  table th,
+  table td {
+    padding: 8px 6px;
+  }
+}

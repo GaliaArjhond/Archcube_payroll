@@ -7,6 +7,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
+$popupMessage = null; // Initialize popup message variable
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $uid = $_POST['rfidCode'];
     $currentDate = date('Y-m-d');
@@ -34,44 +36,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
 
             if (!$existing) {
                 // First scan today = check in
-                $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, checkIn, checkOut, status) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$employeeId, $currentDate, $currentTime, null, 'Checked In']);
+                $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, timeIn) VALUES (?, ?, ?)");
+                $stmt->execute([$employeeId, $currentDate, $currentTime]);
 
+                // Optional: Log to system logs
+                if (isset($_SESSION['userId'])) {
+                    $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                    $logStmt->execute([$_SESSION['userId'], 20]); // 20 = Check-In
+                }
 
-                // Log check-in to systemLogs
-                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-                $logStmt->execute([
-                    $_SESSION['userId'], // Use the actual user ID from session
-                    20 // or 21 for check-out
-                ]);
-
-                echo "Check-in recorded.";
-            } elseif (!$existing['checkOut']) {
+                $popupMessage = "Check-in recorded for " . addslashes($employeeName) . ".";
+            } elseif ($existing && !$existing['timeOut']) {
                 // Second scan = check out
-                $stmt = $pdo->prepare("UPDATE attendance SET checkOut = ?, status = ? WHERE attendanceId = ?");
-                $stmt->execute([$currentTime, 'Checked Out', $existing['attendanceId']]);
+                $stmt = $pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
+                $stmt->execute([$currentTime, $existing['attendanceId']]);
 
+                // Optional: Log to system logs
+                if (isset($_SESSION['userId'])) {
+                    $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                    $logStmt->execute([$_SESSION['userId'], 21]); // 21 = Check-Out
+                }
 
-                // Log check-out to systemLogs
-                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-                $logStmt->execute([
-                    $_SESSION['userId'], // Use the actual user ID from session
-                    21 // or 21 for check-out
-                ]);
-
-                echo "Check-out recorded.";
+                $popupMessage = "Check-out recorded for " . addslashes($employeeName) . ".";
             } else {
-                echo "Already checked in and out today.";
+                $popupMessage = $employeeName . " has already checked in and out today.";
             }
         } else {
-            echo "RFID UID not assigned to any employee.";
+            $popupMessage = "RFID UID not assigned to any employee.";
         }
     } else {
-        echo "RFID UID not found.";
+        $popupMessage = "RFID UID not found.";
     }
-} else {
-    echo "Invalid request.";
 }
+
 ?>
 
 <html lang="en">
@@ -125,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 <div class="download_group">
                     <button type="submit" name="download_attendance" class="download_button">Download Attendance</button>
                     <button type="submit" name="print_attendance" class="download_button">Print Attendance</button>
+                    <a href="../includes/schedule.php">Edit Schedule</a>
                 </div>
 
                 <div class="tools_group">
@@ -229,17 +227,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                             JOIN employees e ON a.employeeId = e.employeeId
                             LEFT JOIN position p ON e.positionId = p.positionId
                             $whereSql
-                            ORDER BY a.attendanceDate DESC, a.checkIn DESC
+                            ORDER BY a.attendanceDate DESC, a.timeIn DESC
                             $limitSql
                         ");
                         $stmt->execute($params);
 
                         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                             // Determine status and row color
-                            if (!$row['checkIn'] && !$row['checkOut']) {
+                            if (!$row['timeIn'] && !$row['timeOut']) {
                                 $status = 'Absent';
                                 $rowClass = 'status-absent';
-                            } elseif ($row['checkIn'] && !$row['checkOut']) {
+                            } elseif ($row['timeIn'] && !$row['timeOut']) {
                                 $status = 'Checked In';
                                 $rowClass = 'status-in';
                             } else {
@@ -251,8 +249,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                             echo "<td>" . htmlspecialchars($row['employeeId']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['positionName'] ?? 'N/A') . "</td>";
-                            echo "<td>" . htmlspecialchars($row['checkIn'] ?? '-') . "</td>";
-                            echo "<td>" . htmlspecialchars($status) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['timeIn'] ?? '-') . "</td>";
+                            $status = $row['status'] ?? 'Absent';
+                            $statusClass = '';
+                            if ($status === 'On Time') $statusClass = 'status-ontime';
+                            elseif ($status === 'Late') $statusClass = 'status-late';
+                            elseif ($status === 'Absent') $statusClass = 'status-absent';
+
+                            echo "<td class=\"$statusClass\">" . htmlspecialchars($status) . "</td>";
                             echo "<td><a href='#'>Edit</a></td>";
                             echo "</tr>";
                         }
@@ -268,13 +272,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
         </div>
     </div>
 
+    <!-- Add this near the top of your <body> -->
+    <div id="popupMessage" class="popup-message" style="display:none;">
+        <span id="popupText"></span>
+        <button onclick="closePopup()" class="popup-close">OK</button>
+    </div>
+
     <script>
         document.getElementById('rfidCode').addEventListener('input', function() {
             if (this.value.length >= 10) { // Adjust length as needed for your RFID UIDs
                 this.form.submit();
             }
         });
+
+        function showPopup(message) {
+            document.getElementById('popupText').textContent = message;
+            document.getElementById('popupMessage').style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popupMessage').style.display = 'none';
+        }
+
+        // Show popup message if exists
+        <?php if ($popupMessage): ?>
+            showPopup("<?php echo addslashes($popupMessage); ?>");
+        <?php endif; ?>
     </script>
+    <?php if ($popupMessage): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showPopup("<?= $popupMessage ?>");
+            });
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>
