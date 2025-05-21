@@ -29,13 +29,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert into employees
         $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCode, name, email, phoneNumber, address, birthDate, role,
+            rfidCodeId, name, email, phoneNumber, address, birthDate, role,
             genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
             profileImage, createAt, updatedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
         $stmt->execute([
-            $_POST['employee_rfidCode'],
+            $_POST['employee_rfidCodeId'],
             $_POST['employee_name'],
             $_POST['employee_email'],
             $_POST['employee_contact'],
@@ -53,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $employeeId = $pdo->lastInsertId();
+
+        // Mark RFID as assigned
+        $pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$_POST['employee_rfidCodeId']]);
 
         // Insert government contributions
         $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
@@ -147,8 +150,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_name">Employee Name:</label>
             <input type="text" id="employee_name" name="employee_name" required />
 
-            <label for="employee_rfidCode">RFID code:</label>
-            <input type="text" id="employee_rfidCode" name="employee_rfidCode" required />
+            <label for="employee_rfidCodeId">RFID code:</label>
+            <select id="employee_rfidCodeId" name="employee_rfidCodeId" required>
+                <option value="">-- Select Available RFID --</option>
+                <?php
+                $rfidStmt = $pdo->query("SELECT rfidCodeId, rfidCode FROM rfid_cards WHERE status = 'available'");
+                while ($row = $rfidStmt->fetch()) {
+                    echo '<option value="' . htmlspecialchars($row['rfidCodeId']) . '">' . htmlspecialchars($row['rfidCode']) . '</option>';
+                }
+                ?>
+            </select>
 
             <label for="employee_gender">Gender:</label>
             <select id="employee_gender" class="employee_gender" name="employee_gender" required>
@@ -280,6 +291,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 alert('Failed to preview photo: ' + error.message);
             }
         }
+
+        <?php if ($successMsg): ?>
+            window.onload = function() {
+                alert("<?php echo addslashes($successMsg); ?>");
+            }
+        <?php endif; ?>
     </script>
 
 </body>

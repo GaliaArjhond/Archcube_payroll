@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Manila'); // or your local timezone
 $pdo = include '../config/database.php';
 session_start();
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -11,49 +12,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $currentDate = date('Y-m-d');
     $currentTime = date('H:i:s');
 
-
-    $stmt = $pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCode = ?");
+    // Find the rfidCodeId from rfid_cards
+    $stmt = $pdo->prepare("SELECT rfidCodeId FROM rfid_cards WHERE rfidCode = ?");
     $stmt->execute([$uid]);
-    $employee = $stmt->fetch();
+    $rfidCard = $stmt->fetch();
 
-    if ($employee) {
-        $employeeId = $employee['employeeId'];
-        $employeeName = $employee['name'];
+    if ($rfidCard) {
+        // Find the employee with this rfidCodeId
+        $stmt = $pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCodeId = ?");
+        $stmt->execute([$rfidCard['rfidCodeId']]);
+        $employee = $stmt->fetch();
 
-        // Check if already checked in today
-        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
-        $stmt->execute([$employeeId, $currentDate]);;
-        $existing = $stmt->fetch();
+        if ($employee) {
+            $employeeId = $employee['employeeId'];
+            $employeeName = $employee['name'];
 
-        if (!$existing) {
-            // First scan today = check in
-            $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, checkIn, checkOut) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$employeeId, $currentDate, $currentTime, null]);
-            $attendanceId = $pdo->lastInsertId();
+            // Check if already checked in today
+            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
+            $stmt->execute([$employeeId, $currentDate]);
+            $existing = $stmt->fetch();
 
-            // Log check-in to systemLogs
-            $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-            $logStmt->execute([
-                null,
-                20
-            ]);
+            if (!$existing) {
+                // First scan today = check in
+                $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, checkIn, checkOut, status) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$employeeId, $currentDate, $currentTime, null, 'Checked In']);
 
-            echo "Check-in recorded.";
-        } elseif (!$existing['checkOut']) {
-            // Second scan = check out
-            $stmt = $pdo->prepare("UPDATE attendance SET checkOut = ? WHERE attendanceId = ?");
-            $stmt->execute([$currentTime, $existing['attendanceId']]);
 
-            // Log check-out to systemLogs
-            $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-            $logStmt->execute([
-                null,
-                21
-            ]);
+                // Log check-in to systemLogs
+                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                $logStmt->execute([
+                    $_SESSION['userId'], // Use the actual user ID from session
+                    20 // or 21 for check-out
+                ]);
 
-            echo "Check-out recorded.";
+                echo "Check-in recorded.";
+            } elseif (!$existing['checkOut']) {
+                // Second scan = check out
+                $stmt = $pdo->prepare("UPDATE attendance SET checkOut = ?, status = ? WHERE attendanceId = ?");
+                $stmt->execute([$currentTime, 'Checked Out', $existing['attendanceId']]);
+
+
+                // Log check-out to systemLogs
+                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                $logStmt->execute([
+                    $_SESSION['userId'], // Use the actual user ID from session
+                    21 // or 21 for check-out
+                ]);
+
+                echo "Check-out recorded.";
+            } else {
+                echo "Already checked in and out today.";
+            }
         } else {
-            echo "Already checked in and out today.";
+            echo "RFID UID not assigned to any employee.";
         }
     } else {
         echo "RFID UID not found.";
