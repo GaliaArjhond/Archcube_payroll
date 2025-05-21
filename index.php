@@ -1,6 +1,6 @@
 <?php
 session_start();
-$conn = include('config/database.php');
+$conn = include('config/database.php'); // Make sure database.php returns $pdo
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $username = $_POST['username'] ?? '';
@@ -16,13 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($admin && password_verify($password, $admin['password'])) {
       $_SESSION['username'] = $admin['username'];
       $_SESSION['role'] = $admin['role'];
+      $_SESSION['userId'] = $admin['userId']; // Store for future use if needed
 
-      $systemlog_stmt = $conn->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (:userId, :actionTypeId, :timestamp)");
+      // Insert into systemLogs
       $actionTypeId = 1; // Assuming 1 = Login
-      $systemlog_stmt->bindParam(':userId', $admin['userId'], PDO::PARAM_INT);
-      $systemlog_stmt->bindParam(':actionTypeId', $actionTypeId);
-      $systemlog_stmt->bindParam(':timestamp', $login_time);
-      $systemlog_stmt->execute();
+      $systemlog_stmt = $conn->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+      $systemlog_stmt->execute([$admin['userId'], $actionTypeId]);
 
       header("Location: ../includes/dashboard.php");
       exit;
