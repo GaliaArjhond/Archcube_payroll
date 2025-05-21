@@ -6,91 +6,53 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   header('Location: ../index.php');
   exit();
 }
+
+// Optional: Fetch employees list for the dropdown
+$stmt = $pdo->query("SELECT employeeId, name FROM employees ORDER BY name ASC");
+$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <link rel="stylesheet" href="../assets/css/user_management_style.css" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Management</title>
+  <title>Add Deductions & Benefits</title>
+  <link rel="stylesheet" href="../assets/css/deductions_benefits.css">
 </head>
 
 <body>
-  <div class="side_bar">
-    <h1>Archcube Payroll</h1>
-    <div class="side_bar_container">
-      <div class="side_bar_item">
-        <a href="../includes/dashboard.php">Dashboard</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="user_management2.php">Employee Management</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="attendance.php">Attendance</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="Payroll_Mangement.php">Payroll Management</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="deduc&benefits.php">Deductions & Benefits Management</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="payslip.php">Payslip Generator</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="reports.php">Summary Reports</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="setting.php">Settings</a>
-      </div>
-      <div class="side_bar_item">
-        <a href="../includes/logout.php" class="logout">Log Out</a>
-      </div>
-    </div>
-  </div>
+  <div class="container">
+    <h1>Add Deductions & Benefits</h1>
 
-  <div class="main_content">
-    <div class="top_controls">
-      <div class="search_filter_group">
-        <div class="search_bar">
-          <input type="text" placeholder="Search..." class="search_input" />
-          <button class="search_button">Search</button>
-        </div>
-        <div class="filter_section">
-          <label for="filter">Filter by:</label>
-          <select id="filter" class="filter_select">
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </div>
-      <div class="add_button">
-        <a href="addEmp.php" class="add_employee_button">
-          Add Employee
-        </a>
-      </div>
-    </div>
-    <div class="table_section">
-      <table class="data_table">
-        <thead>
-          <tr>
-            <th>Profile</th>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Contact</th>
-            <th>Position</th>
-            <th>Basic Salary</th>
-            <th>Upcoming Payroll</th>
-            <th>Attendance</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-      </table>
-    </div>
+    <form action="processAddDeduction.php" method="POST">
+      <label for="employee">Select Employee:</label>
+      <select name="employeeId" required>
+        <option value="">-- Select Employee --</option>
+        <?php foreach ($employees as $emp): ?>
+          <option value="<?= $emp['employeeId'] ?>"><?= htmlspecialchars($emp['name']) ?></option>
+        <?php endforeach; ?>
+      </select>
+
+      <label>SSS Deduction (₱):</label>
+      <input type="number" name="sss" step="0.01" min="0" required>
+
+      <label>PhilHealth Deduction (₱):</label>
+      <input type="number" name="philhealth" step="0.01" min="0" required>
+
+      <label>PAG-IBIG Deduction (₱):</label>
+      <input type="number" name="pagibig" step="0.01" min="0" required>
+
+      <label>Other Deductions (₱):</label>
+      <input type="number" name="other_deductions" step="0.01" min="0">
+
+      <label>Benefits (Allowances, etc.) (₱):</label>
+      <input type="number" name="benefits" step="0.01" min="0">
+
+      <button type="submit">Save</button>
+      <a href="deduc&benefits.php" class="btn">Cancel</a>
+    </form>
   </div>
 </body>
 
