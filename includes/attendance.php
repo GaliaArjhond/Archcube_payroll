@@ -5,6 +5,62 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
+    $uid = $_POST['rfidCode'];
+    $currentDate = date('Y-m-d');
+    $currentTime = date('H:i:s');
+
+
+    $stmt = $pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCode = ?");
+    $stmt->execute([$uid]);
+    $employee = $stmt->fetch();
+
+    if ($employee) {
+        $employeeId = $employee['employeeId'];
+        $employeeName = $employee['name'];
+
+        // Check if already checked in today
+        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
+        $stmt->execute([$employeeId, $currentDate]);;
+        $existing = $stmt->fetch();
+
+        if (!$existing) {
+            // First scan today = check in
+            $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, checkIn, checkOut) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$employeeId, $currentDate, $currentTime, null]);
+            $attendanceId = $pdo->lastInsertId();
+
+            // Log check-in to systemLogs
+            $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+            $logStmt->execute([
+                null,
+                20
+            ]);
+
+            echo "Check-in recorded.";
+        } elseif (!$existing['checkOut']) {
+            // Second scan = check out
+            $stmt = $pdo->prepare("UPDATE attendance SET checkOut = ? WHERE attendanceId = ?");
+            $stmt->execute([$currentTime, $existing['attendanceId']]);
+
+            // Log check-out to systemLogs
+            $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+            $logStmt->execute([
+                null,
+                21
+            ]);
+
+            echo "Check-out recorded.";
+        } else {
+            echo "Already checked in and out today.";
+        }
+    } else {
+        echo "RFID UID not found.";
+    }
+} else {
+    echo "Invalid request.";
+}
 ?>
 
 <html lang="en">
@@ -53,7 +109,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     <div class="main_content">
         <h2>Attendance Management</h2>
         <div class="attendance_form">
-            <form action="attendance_process.php" method="post">
+            <form method="post">
 
                 <div class="download_group">
                     <button type="submit" name="download_attendance" class="download_button">Download Attendance</button>
@@ -107,17 +163,67 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
                             <th>Employee ID</th>
                             <th>Employee Name</th>
                             <th>Position</th>
-                            <th>Check In</th>
-                            <th>Check Out</th>
+                            <th>Check-In Time</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
+
+                        <?php
+                        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                        try {
+                            $stmt = $pdo->query("
+                                SELECT a.*, e.name, p.positionName
+                                FROM attendance a
+                                JOIN employees e ON a.employeeId = e.employeeId
+                                LEFT JOIN position p ON e.positionId = p.positionId
+                                ORDER BY a.attendanceDate DESC, a.checkIn DESC
+                            ");
+                        } catch (PDOException $e) {
+                            die("Query Error: " . $e->getMessage());
+                        }
+
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                            // Determine status and row color
+                            if (!$row['checkIn'] && !$row['checkOut']) {
+                                $status = 'Absent';
+                                $rowClass = 'status-absent';
+                            } elseif ($row['checkIn'] && !$row['checkOut']) {
+                                $status = 'Checked In';
+                                $rowClass = 'status-in';
+                            } else {
+                                $status = 'Checked Out';
+                                $rowClass = 'status-out';
+                            }
+                            echo "<tr class=\"$rowClass\">";
+                            echo "<td>" . htmlspecialchars($row['attendanceDate']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['employeeId']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['positionName'] ?? 'N/A') . "</td>";
+                            echo "<td>" . htmlspecialchars($row['checkIn'] ?? '-') . "</td>";
+                            echo "<td>" . htmlspecialchars($status) . "</td>";
+                            echo "<td><a href='#'>Edit</a></td>";
+                            echo "</tr>";
+                        }
+                        ?>
                     </table>
                 </div>
+
+                <!-- Add this inside your attendance form -->
+                <label for="rfidCode">Scan RFID Card:</label>
+                <input type="text" id="rfidCode" name="rfidCode" autofocus autocomplete="off" />
+
             </form>
         </div>
     </div>
 
+    <script>
+        document.getElementById('rfidCode').addEventListener('input', function() {
+            if (this.value.length >= 10) { // Adjust length as needed for your RFID UIDs
+                this.form.submit();
+            }
+        });
+    </script>
 </body>
 
 </html>

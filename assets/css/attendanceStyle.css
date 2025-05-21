@@ -286,3 +286,18 @@ body {
   width: 100%;
   margin: 0;
 }
+
+tr.status-absent {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+tr.status-in {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+tr.status-out {
+  background-color: #f8d7da;
+  color: #721c24;
+}

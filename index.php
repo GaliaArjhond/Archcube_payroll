@@ -16,14 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($admin && password_verify($password, $admin['password'])) {
       $_SESSION['username'] = $admin['username'];
       $_SESSION['role'] = $admin['role'];
-      $_SESSION['userId'] = $admin['userId']; // Store for future use if needed
+      $_SESSION['userId'] = $admin['userId'];
 
-      // Insert into systemLogs
-      $actionTypeId = 1; // Assuming 1 = Login
+
+      $actionTypeId = 1;
       $systemlog_stmt = $conn->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
       $systemlog_stmt->execute([$admin['userId'], $actionTypeId]);
 
-      header("Location: ../includes/dashboard.php");
+      echo "<script>
+        alert('Welcome, " . htmlspecialchars($admin['username']) . "!');
+        window.location.href = '../includes/dashboard.php';
+      </script>";
       exit;
     } else {
       echo "<script>alert('Invalid admin credentials.');</script>";
