@@ -15,6 +15,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Summary Reports</title>
+
 </head>
 
 <body>
@@ -46,11 +47,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
                 <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="../includes/logout.php" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout" onclick="return confirmLogout();">Log Out</a>
             </div>
         </div>
     </div>
-
+    <script>
+        function confirmLogout() {
+            return confirm('Are you sure you want to log out?');
+        }
+    </script>
 
 </body>
 

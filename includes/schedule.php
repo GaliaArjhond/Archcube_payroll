@@ -125,7 +125,7 @@ $assignments = $pdo->query(
                 <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="../includes/logout.php" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout" onclick="return confirmLogout();">Log Out</a>
             </div>
         </div>
     </div>
@@ -250,6 +250,14 @@ $assignments = $pdo->query(
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmLogout() {
+            return confirm('Are you sure you want to log out?');
+        }
+    </script>
 </body>
 
 </html>

@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 <a href="../includes/setting.php">Settings</a>
             </div>
             <div class="side_bar_item">
-                <a href="../includes/logout.php" class="logout">Log Out</a>
+                <a href="../includes/logout.php" class="logout" onclick="return confirmLogout();">Log Out</a>
             </div>
         </div>
     </div>
@@ -306,6 +306,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
             });
         </script>
     <?php endif; ?>
+    <script>
+        function confirmLogout() {
+            return confirm('Are you sure you want to log out?');
+        }
+    </script>
 </body>
 
 </html>
