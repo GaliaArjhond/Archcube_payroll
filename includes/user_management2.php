@@ -14,10 +14,16 @@ $where = [];
 $params = [];
 
 if ($search !== '') {
-  $where[] = "(e.name LIKE ? OR e.employeeId LIKE ? OR e.phoneNumber LIKE ?)";
-  $params[] = "%$search%";
-  $params[] = "%$search%";
-  $params[] = "%$search%";
+  $where[] = "(e.name LIKE ? 
+    OR e.employeeId LIKE ? 
+    OR e.phoneNumber LIKE ? 
+    OR p.positionName LIKE ? 
+    OR es.empStatusName LIKE ?)";
+
+  // Add search param for each field
+  for ($i = 0; $i < 5; $i++) {
+    $params[] = "%$search%";
+  }
 }
 
 if ($filter === 'active') {
@@ -101,6 +107,10 @@ $stmt->execute($params);
           </select>
         </div>
       </form>
+      <div class="top_control_functions">
+        <button type="button" onclick="clearSearchFilter()" class="search_button" style="margin-right:8px;">Clear</button>
+        <button type="button" onclick="window.print()" class="search_button">Print List</button>
+      </div>
       <div class="add_button">
         <a href="addEmp.php" class="add_employee_button">Add Employee</a>
       </div>
@@ -149,6 +159,12 @@ $stmt->execute($params);
   <script>
     function confirmLogout() {
       return confirm('Are you sure you want to log out?');
+    }
+
+    function clearSearchFilter() {
+      document.querySelector('.search_input').value = '';
+      document.querySelector('.filter_select').selectedIndex = 0;
+      document.querySelector('.search_filter_group').submit();
     }
   </script>
 </body>
