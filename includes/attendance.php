@@ -16,6 +16,14 @@ $to_date = $_GET['to_date'] ?? '';
 
 $popupMessage = null; // Initialize popup message variable
 
+// Log download attendance action
+if (isset($_GET['download_attendance'])) {
+    if (isset($_SESSION['userId'])) {
+        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+        $logStmt->execute([$_SESSION['userId'], 19]);
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $uid = $_POST['rfidCode'];
     $currentDate = date('Y-m-d');
@@ -46,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, timeIn) VALUES (?, ?, ?)");
                 $stmt->execute([$employeeId, $currentDate, $currentTime]);
 
-                // Optional: Log to system logs
+                // Log to system logs
                 if (isset($_SESSION['userId'])) {
                     $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
                     $logStmt->execute([$_SESSION['userId'], 20]); // 20 = Check-In
@@ -58,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 $stmt = $pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
                 $stmt->execute([$currentTime, $existing['attendanceId']]);
 
-                // Optional: Log to system logs
+                // Log to system logs
                 if (isset($_SESSION['userId'])) {
                     $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
                     $logStmt->execute([$_SESSION['userId'], 21]); // 21 = Check-Out
@@ -76,6 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'log_print') {
+    if (isset($_SESSION['userId'])) {
+        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+        $logStmt->execute([$_SESSION['userId'], 18]);
+    }
+    exit;
+}
 ?>
 
 <html lang="en">
