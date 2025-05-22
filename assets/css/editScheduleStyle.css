@@ -6,7 +6,8 @@
 }
 
 body {
-  background: #f4f7fa;
+  background: linear-gradient(120deg, #eaf2fb 0%, #f4f7fa 100%);
+  font-family: "Roboto", sans-serif;
 }
 
 .side_bar {
@@ -20,41 +21,46 @@ body {
   padding: 20px;
   overflow-y: auto;
   box-shadow: 2px 0 8px rgba(7, 71, 153, 0.08);
+  border-top-right-radius: 18px;
+  border-bottom-right-radius: 18px;
 }
 
 .side_bar h1 {
-  font-size: 26px;
-  margin-bottom: 28px;
+  font-size: 28px;
+  margin-bottom: 32px;
   text-align: center;
-  letter-spacing: 1px;
-  font-weight: 700;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(7, 71, 153, 0.12);
 }
 
 .side_bar_container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .side_bar_item {
-  padding: 12px 18px;
-  border-radius: 6px;
+  padding: 13px 20px;
+  border-radius: 8px;
   transition: background 0.2s, color 0.2s;
-  margin-top: 10px;
+  margin-top: 8px;
+  font-size: 17px;
 }
 
 .side_bar_item a {
   text-decoration: none;
   color: white;
-  font-size: 17px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 500;
 }
 
 .side_bar_item:hover {
   background: #05509a;
   color: #fff;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.1);
 }
 
 .logout {
@@ -63,98 +69,114 @@ body {
 }
 
 .main_content {
-  margin-left: 270px; /* Space for the sidebar */
-  padding: 32px 40px;
+  margin-left: 270px;
+  padding: 40px 48px;
   min-height: 100vh;
-  border-radius: 18px 0 0 0;
+  border-radius: 24px 0 0 0;
+  background: #f8fbff;
+  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.07);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 32px;
 }
 
 /* --- Schedule Management Main Content --- */
 .main_content h2,
 .main_content h3 {
   color: #074799;
-  margin-bottom: 18px;
-  font-weight: 700;
+  margin-bottom: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 form {
   background: #fff;
-  padding: 24px 28px;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(7, 71, 153, 0.09);
+  padding: 32px 36px;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.1);
   margin-bottom: 40px;
-  max-width: 600px;
+  max-width: 650px;
+  transition: box-shadow 0.2s;
 }
 
 form label {
   display: block;
-  margin-top: 16px;
-  margin-bottom: 6px;
+  margin-top: 18px;
+  margin-bottom: 8px;
   color: #074799;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 form input[type="text"],
 form input[type="time"],
 form select {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid #b3c6e0;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 1em;
   background: #f4f7fa;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  transition: border 0.2s;
+}
+
+form input:focus,
+form select:focus {
+  border: 1.5px solid #074799;
+  outline: none;
 }
 
 form select[multiple] {
-  height: 90px;
+  height: 100px;
 }
 
 form button {
   background: linear-gradient(90deg, #074799 80%, #0563c1 100%);
   color: #fff;
   border: none;
-  padding: 10px 22px;
-  border-radius: 5px;
-  font-size: 1em;
-  margin-top: 18px;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 1.08em;
+  margin-top: 22px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.07);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.1);
+  letter-spacing: 0.5px;
 }
 
 form button:hover {
   background: #034b7a;
   color: #fff;
+  box-shadow: 0 4px 18px rgba(7, 71, 153, 0.13);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  margin-bottom: 32px;
-  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.07);
-  border-radius: 10px;
+  margin-bottom: 36px;
+  box-shadow: 0 2px 12px rgba(7, 71, 153, 0.09);
+  border-radius: 12px;
   overflow: hidden;
 }
 
 table th,
 table td {
-  padding: 12px 16px;
+  padding: 14px 18px;
   text-align: left;
   border-bottom: 1px solid #e0e6ed;
+  font-size: 1em;
 }
 
 table th {
   background: linear-gradient(90deg, #074799 80%, #0563c1 100%);
   color: #fff;
   letter-spacing: 1px;
-  font-weight: 600;
+  font-weight: 700;
+  border: none;
 }
 
 table tr:last-child td {
@@ -188,8 +210,8 @@ a:hover {
   background: #f4f7fa;
   border: 1px solid #b3c6e0;
   border-radius: 5px;
-  padding: 7px 14px;
-  margin: 4px 6px 4px 0;
+  padding: 8px 16px;
+  margin: 4px 8px 4px 0;
   cursor: pointer;
   transition: background 0.2s, border 0.2s;
   font-size: 1em;
@@ -198,7 +220,7 @@ a:hover {
 #workDaysRange input[type="checkbox"],
 .workDays-radio input[type="radio"] {
   accent-color: #074799;
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 /* Hover effect on work days labels */
@@ -210,13 +232,18 @@ a:hover {
 
 /* Focus outlines for accessibility */
 button:focus,
-a:focus {
+a:focus,
+input:focus,
+select:focus {
   outline: 3px solid #074799;
   outline-offset: 2px;
 }
 
 /* --- Responsive: Stack Form Labels and Inputs --- */
 @media (max-width: 600px) {
+  .main_content {
+    padding: 10px;
+  }
   form label,
   form input,
   form select,
@@ -233,7 +260,13 @@ a:focus {
     margin-bottom: 8px;
   }
   form {
-    padding: 16px 20px;
+    padding: 14px 8px;
+    max-width: 100%;
+  }
+  table th,
+  table td {
+    padding: 8px 6px;
+    font-size: 0.98em;
   }
 }
 
@@ -244,14 +277,15 @@ a:focus {
     min-height: auto;
     max-height: 200px;
     overflow-y: auto;
+    border-radius: 0 0 18px 18px;
   }
   .main_content {
     margin-left: 0;
-    padding: 16px;
+    padding: 12px;
   }
   form {
     max-width: 100%;
-    padding: 16px 20px;
+    padding: 12px 8px;
   }
   table th,
   table td {
