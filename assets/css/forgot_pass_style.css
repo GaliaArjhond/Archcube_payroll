@@ -1,0 +1,145 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+}
+
+main {
+  margin-right: 200px;
+  position: fixed;
+  padding: 107px;
+  background-color: #074799;
+  color: white;
+  height: calc(150vh - 60px);
+  grid-area: main;
+  overflow-y: auto;
+}
+
+footer {
+  background-color: #074799;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: x-small;
+  left: 17%;
+  bottom: 0;
+  margin-top: 94px;
+}
+
+a {
+  color: white;
+}
+
+picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute; /* Position the picture */
+  right: 0;
+  top: 70%;
+  left: 55%;
+  transform: translateY(-50%);
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 60px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.welcome-container {
+  margin: 20px auto;
+  position: relative;
+  top: 50px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: flex-start;
+  margin-top: 90px;
+  gap: 10px;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.options-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.options-container .remember-me {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.options-container .forgot-password {
+  text-align: right;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  align-items: center;
+  border: none;
+  margin-top: 90px;
+  padding: 10px 150px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.security-question-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Adds spacing between elements */
+  margin-top: 20px; /* Adds spacing above the section */
+}
+
+.security-question-container label {
+  font-size: 1rem;
+  color: white; /* Matches the overall theme */
+}
+
+.security-question-container select,
+.security-question-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.back-button-container {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  bottom: 10px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #2874a6;
+}

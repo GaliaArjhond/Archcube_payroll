@@ -1,0 +1,140 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+}
+
+main {
+  margin-right: 200px;
+  position: fixed;
+  padding: 120px;
+  background-color: #074799;
+  color: white;
+  height: calc(150vh - 60px);
+  grid-area: main;
+  overflow-y: auto;
+}
+
+footer {
+  background-color: #074799;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: x-small;
+  left: 17%;
+  bottom: 0;
+  margin-top: 180px;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute; /* Position the picture */
+  right: 0;
+  top: 70%;
+  left: 55%;
+  transform: translateY(-50%);
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 60px;
+  margin-top: 30px;
+  text-align: center;
+}
+
+.welcome-container {
+  margin: 20px auto;
+  position: relative;
+  top: 50px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: flex-start;
+  margin-top: 90px;
+  gap: 10px;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.options-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.options-container .remember-me {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.options-container .forgot-password {
+  text-align: right;
+}
+
+button {
+  background-color: #3498db;
+  color: white;
+  align-items: center;
+  border: none;
+  margin-top: 90px;
+  padding: 10px 150px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.empAttendance {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.empAttendance a {
+  display: inline-block;
+  background-color: #2176bd;
+  color: #fff;
+  padding: 12px 32px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.empAttendance a:hover {
+  background-color: #155a8a;
+}
