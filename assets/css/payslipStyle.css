@@ -187,3 +187,34 @@ body {
   font-size: 15px;
   margin-right: 4px;
 }
+
+/* Add or update this for blue cards */
+.card {
+  background: linear-gradient(135deg, #074799 80%, #0563c1 100%);
+  color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 16px rgba(7, 71, 153, 0.12);
+  padding: 28px 24px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 160px;
+  transition: box-shadow 0.2s;
+}
+
+.card h2,
+.card span,
+.card p,
+.card ul,
+.card li {
+  color: #fff;
+}
+
+.card a {
+  color: #ffe082;
+  text-decoration: underline;
+}
+
+.card a:hover {
+  color: #fffde7;
+}

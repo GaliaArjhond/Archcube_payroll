@@ -74,7 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contribution['amount']
             ]);
         }
-
+        // Insert into employee_schedules
+        $scheduleStmt = $pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
+        $scheduleStmt->execute([
+            $employeeId,
+            $_POST['templateId']
+        ]);
         $actionTypeId = 3;
         if (!isset($_SESSION['userId']) || empty($_SESSION['userId'])) {
             $errorMsg = "Error: User ID missing in session. Cannot log action.";
@@ -226,6 +231,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="6">Terminated</option>
             </select>
 
+            <label for="employee_schedule">Schedule</label>
+            <label for="templateId">Schedule Template:</label>
+            <select name="templateId" id="templateId" required>
+                <option value="" disabled selected>Select template</option>
+                <?php
+                // Fetch schedule templates from the database
+                $templates = [];
+                try {
+                    $tplStmt = $pdo->query("SELECT templateId, templateName FROM schedule_templates");
+                    $templates = $tplStmt->fetchAll(PDO::FETCH_ASSOC);
+                } catch (PDOException $e) {
+                    // Optionally handle error
+                }
+                foreach ($templates as $tpl): ?>
+                    <option value="<?= $tpl['templateId'] ?>"><?= htmlspecialchars($tpl['templateName']) ?></option>
+                <?php endforeach; ?>
+            </select>
+
             <label for="payroll_type">Payroll Type:</label>
             <select name="payroll_type" id="payroll_type" required>
                 <option value="">-- Select Status --</option>
@@ -280,28 +303,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
     </div>
 
-    <script>
-        function previewPhoto(event) {
-            try {
-                const [file] = event.target.files;
-                if (file) {
-                    document.getElementById('photoPreview').src = URL.createObjectURL(file);
-                }
-            } catch (error) {
-                alert('Failed to preview photo: ' + error.message);
-            }
-        }
-
-        <?php if ($successMsg): ?>
-            window.onload = function() {
-                alert("<?php echo addslashes($successMsg); ?>");
-            }
-        <?php endif; ?>
-
-        function confirmLogout() {
-            return confirm('Are you sure you want to log out?');
-        }
-    </script>
+    <?php if ($successMsg): ?>
+        <script>
+            window.successMsg = "<?= addslashes($successMsg) ?>";
+        </script>
+    <?php endif; ?>
+    <script src="../assets/js/addEmp.js"></script>
 
 </body>
 

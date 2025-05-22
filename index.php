@@ -73,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
         </div>
         <button type="submit">Login</button>
+        <div class="empAttendance">
+          <a href="../includes/rfid_attendance_ui.html">Employee Attendance</a>
+        </div>
         <footer>
           <p>&copy; 2023 Archcube. All rights reserved.</p>
           <p>Privacy Policy | Terms of Service</p>
