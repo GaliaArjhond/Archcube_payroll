@@ -1,4 +1,5 @@
 <?php
+
 $pdo = include '../config/database.php';
 session_start();
 
@@ -8,6 +9,72 @@ $successMsg = '';
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
+}
+
+class Employee
+{
+    private $pdo;
+    public $id;
+
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function add($data)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO employees (
+            rfidCodeId, name, email, phoneNumber, address, birthDate, role,
+            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
+            profileImage, createAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+
+        $stmt->execute([
+            $data['rfidCodeId'],
+            $data['name'],
+            $data['email'],
+            $data['phoneNumber'],
+            $data['address'],
+            $data['birthDate'],
+            $data['role'],
+            $data['genderId'],
+            $data['hiredDate'],
+            $data['basicSalary'],
+            $data['civilStatusId'],
+            $data['positionId'],
+            $data['empStatusId'],
+            $data['payrollTypeId'],
+            $data['profileImage']
+        ]);
+        $this->id = $this->pdo->lastInsertId();
+        return $this->id;
+    }
+
+    public function assignRFID($rfidCodeId)
+    {
+        $this->pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$rfidCodeId]);
+    }
+
+    public function assignSchedule($templateId)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
+        $stmt->execute([$this->id, $templateId]);
+    }
+}
+
+class Contribution
+{
+    private $pdo;
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function add($employeeId, $type, $number, $amount)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$employeeId, $type, $number, $amount]);
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,38 +94,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $profileImage = 'uploads/' . $filename;
         }
 
-        // Insert into employees
-        $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCodeId, name, email, phoneNumber, address, birthDate, role,
-            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
-            profileImage, createAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
-
-        $stmt->execute([
-            $_POST['employee_rfidCodeId'],
-            $_POST['employee_name'],
-            $_POST['employee_email'],
-            $_POST['employee_contact'],
-            $_POST['employee_address'],
-            $_POST['employee_birthdate'],
-            $_POST['employee_role'] ?? 'admin',
-            $_POST['employee_gender'],
-            $_POST['hired_date'],
-            $_POST['basic_salary'],
-            $_POST['employee_civil'],
-            $_POST['employee_position'],
-            $_POST['employment_status'],
-            $_POST['payroll_type'],
-            $profileImage
+        $employee = new Employee($pdo);
+        $employeeId = $employee->add([
+            'rfidCodeId'    => $_POST['employee_rfidCodeId'],
+            'name'          => $_POST['employee_name'],
+            'email'         => $_POST['employee_email'],
+            'phoneNumber'   => $_POST['employee_contact'],
+            'address'       => $_POST['employee_address'],
+            'birthDate'     => $_POST['employee_birthdate'],
+            'role'          => $_POST['employee_role'] ?? 'admin',
+            'genderId'      => $_POST['employee_gender'],
+            'hiredDate'     => $_POST['hired_date'],
+            'basicSalary'   => $_POST['basic_salary'],
+            'civilStatusId' => $_POST['employee_civil'],
+            'positionId'    => $_POST['employee_position'],
+            'empStatusId'   => $_POST['employment_status'],
+            'payrollTypeId' => $_POST['payroll_type'],
+            'profileImage'  => $profileImage
         ]);
 
-        $employeeId = $pdo->lastInsertId();
+        $employee->assignRFID($_POST['employee_rfidCodeId']);
+        $employee->assignSchedule($_POST['templateId']);
 
-        // Mark RFID as assigned
-        $pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$_POST['employee_rfidCodeId']]);
-
-        // Insert government contributions
-        $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
+        $contribution = new Contribution($pdo);
         $contributions = [
             ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],
             ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],
@@ -66,20 +124,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],
             ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],
         ];
-        foreach ($contributions as $contribution) {
-            $stmt2->execute([
-                $employeeId,
-                $contribution['type'],
-                $contribution['number'],
-                $contribution['amount']
-            ]);
+        foreach ($contributions as $c) {
+            $contribution->add($employeeId, $c['type'], $c['number'], $c['amount']);
         }
-        // Insert into employee_schedules
-        $scheduleStmt = $pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
-        $scheduleStmt->execute([
-            $employeeId,
-            $_POST['templateId']
-        ]);
+
         $actionTypeId = 3;
         if (!isset($_SESSION['userId']) || empty($_SESSION['userId'])) {
             $errorMsg = "Error: User ID missing in session. Cannot log action.";

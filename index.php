@@ -1,38 +1,59 @@
 <?php
 session_start();
-$conn = include('config/database.php'); // Make sure database.php returns $pdo
+$pdo = require_once 'config/database.php';
+
+class User
+{
+  private $pdo;
+  private $username;
+  private $password;
+
+  public function __construct($pdo, $username, $password)
+  {
+    $this->pdo = $pdo;
+    $this->username = $username;
+    $this->password = $password;
+  }
+
+  public function authenticateAdmin()
+  {
+    $query = "SELECT * FROM users WHERE username = :username AND role = 'admin'";
+    $stmt = $this->pdo->prepare($query);
+    $stmt->bindParam(':username', $this->username);
+    $stmt->execute();
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($admin && password_verify($this->password, $admin['password'])) {
+      return $admin;
+    }
+    return false;
+  }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $username = $_POST['username'] ?? '';
   $password = $_POST['password'] ?? '';
 
-  try {
-    $query = "SELECT * FROM users WHERE username = :username AND role = 'admin'";
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(':username', $username);
-    $stmt->execute();
-    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+  $user = new User($pdo, $username, $password);
 
-    if ($admin && password_verify($password, $admin['password'])) {
-      $_SESSION['username'] = $admin['username'];
-      $_SESSION['role'] = $admin['role'];
-      $_SESSION['userId'] = $admin['userId'];
+  $admin = $user->authenticateAdmin();
 
+  if ($admin) {
+    $_SESSION['username'] = $admin['username'];
+    $_SESSION['role'] = $admin['role'];
+    $_SESSION['userId'] = $admin['userId'];
 
-      $actionTypeId = 1;
-      $systemlog_stmt = $conn->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-      $systemlog_stmt->execute([$admin['userId'], $actionTypeId]);
+    $actionTypeId = 1;
+    $systemlog_stmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+    $systemlog_stmt->execute([$admin['userId'], $actionTypeId]);
 
-      echo "<script>
-        alert('Welcome, " . htmlspecialchars($admin['username']) . "!');
-        window.location.href = '../includes/dashboard.php';
-      </script>";
-      exit;
-    } else {
-      echo "<script>alert('Invalid admin credentials.');</script>";
-    }
-  } catch (PDOException $e) {
-    echo "Error: " . $e->getMessage();
+    echo "<script>
+            alert('Welcome, " . htmlspecialchars($admin['username']) . "!');
+            window.location.href = '../includes/dashboard.php';
+        </script>";
+    exit;
+  } else {
+    echo "<script>alert('Invalid admin credentials.');</script>";
   }
 }
 ?>

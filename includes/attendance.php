@@ -1,4 +1,5 @@
 <?php
+// filepath: c:\xampp\htdocs\Archcube_payroll\includes\attendance.php
 date_default_timezone_set('Asia/Manila');
 $pdo = include '../config/database.php';
 session_start();
@@ -7,90 +8,98 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Get filter values from GET or set defaults
-$show_ent = isset($_GET['show_ent']) ? (int)$_GET['show_ent'] : 10;
-$search = isset($_GET['search_input']) ? trim($_GET['search_input']) : '';
-$view = isset($_GET['view_select']) ? $_GET['view_select'] : 'all';
-$from_date = $_GET['from_date'] ?? '';
-$to_date = $_GET['to_date'] ?? '';
+class AttendanceManager
+{
+    private $pdo;
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
 
-$popupMessage = null; // Initialize popup message variable
+    // Encapsulation: Handles check-in/check-out logic
+    public function processRFID($uid, $currentDate, $currentTime, $userId)
+    {
+        // Find the rfidCodeId from rfid_cards
+        $stmt = $this->pdo->prepare("SELECT rfidCodeId FROM rfid_cards WHERE rfidCode = ?");
+        $stmt->execute([$uid]);
+        $rfidCard = $stmt->fetch();
+
+        if (!$rfidCard) return "RFID UID not found.";
+
+        // Find the employee with this rfidCodeId
+        $stmt = $this->pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCodeId = ?");
+        $stmt->execute([$rfidCard['rfidCodeId']]);
+        $employee = $stmt->fetch();
+
+        if (!$employee) return "RFID UID not assigned to any employee.";
+
+        $employeeId = $employee['employeeId'];
+        $employeeName = $employee['name'];
+
+        // Check if already checked in today
+        $stmt = $this->pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
+        $stmt->execute([$employeeId, $currentDate]);
+        $existing = $stmt->fetch();
+
+        if (!$existing) {
+            // First scan today = check in
+            $stmt = $this->pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, timeIn) VALUES (?, ?, ?)");
+            $stmt->execute([$employeeId, $currentDate, $currentTime]);
+            Logger::log($this->pdo, $userId, 20); // 20 = Check-In
+            return "Check-in recorded for " . addslashes($employeeName) . ".";
+        } elseif ($existing && !$existing['timeOut']) {
+            // Second scan = check out
+            $stmt = $this->pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
+            $stmt->execute([$currentTime, $existing['attendanceId']]);
+            Logger::log($this->pdo, $userId, 21); // 21 = Check-Out
+            return "Check-out recorded for " . addslashes($employeeName) . ".";
+        } else {
+            return $employeeName . " has already checked in and out today.";
+        }
+    }
+}
+
+class Logger
+{
+    // Static method for logging actions (Abstraction)
+    public static function log($pdo, $userId, $actionTypeId)
+    {
+        if ($userId) {
+            $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+            $logStmt->execute([$userId, $actionTypeId]);
+        }
+    }
+}
+
+// --- END OOP FUNDAMENTALS ---
 
 // Log download attendance action
 if (isset($_GET['download_attendance'])) {
-    if (isset($_SESSION['userId'])) {
-        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-        $logStmt->execute([$_SESSION['userId'], 19]);
-    }
+    Logger::log($pdo, $_SESSION['userId'] ?? null, 19); // 19 = Download Attendance
 }
+
+$popupMessage = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $uid = $_POST['rfidCode'];
     $currentDate = date('Y-m-d');
     $currentTime = date('H:i:s');
-
-    // Find the rfidCodeId from rfid_cards
-    $stmt = $pdo->prepare("SELECT rfidCodeId FROM rfid_cards WHERE rfidCode = ?");
-    $stmt->execute([$uid]);
-    $rfidCard = $stmt->fetch();
-
-    if ($rfidCard) {
-        // Find the employee with this rfidCodeId
-        $stmt = $pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCodeId = ?");
-        $stmt->execute([$rfidCard['rfidCodeId']]);
-        $employee = $stmt->fetch();
-
-        if ($employee) {
-            $employeeId = $employee['employeeId'];
-            $employeeName = $employee['name'];
-
-            // Check if already checked in today
-            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
-            $stmt->execute([$employeeId, $currentDate]);
-            $existing = $stmt->fetch();
-
-            if (!$existing) {
-                // First scan today = check in
-                $stmt = $pdo->prepare("INSERT INTO attendance (employeeId, attendanceDate, timeIn) VALUES (?, ?, ?)");
-                $stmt->execute([$employeeId, $currentDate, $currentTime]);
-
-                // Log to system logs
-                if (isset($_SESSION['userId'])) {
-                    $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-                    $logStmt->execute([$_SESSION['userId'], 20]); // 20 = Check-In
-                }
-
-                $popupMessage = "Check-in recorded for " . addslashes($employeeName) . ".";
-            } elseif ($existing && !$existing['timeOut']) {
-                // Second scan = check out
-                $stmt = $pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
-                $stmt->execute([$currentTime, $existing['attendanceId']]);
-
-                // Log to system logs
-                if (isset($_SESSION['userId'])) {
-                    $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-                    $logStmt->execute([$_SESSION['userId'], 21]); // 21 = Check-Out
-                }
-
-                $popupMessage = "Check-out recorded for " . addslashes($employeeName) . ".";
-            } else {
-                $popupMessage = $employeeName . " has already checked in and out today.";
-            }
-        } else {
-            $popupMessage = "RFID UID not assigned to any employee.";
-        }
-    } else {
-        $popupMessage = "RFID UID not found.";
-    }
+    $attendanceManager = new AttendanceManager($pdo);
+    $popupMessage = $attendanceManager->processRFID($uid, $currentDate, $currentTime, $_SESSION['userId'] ?? null);
 }
 
+// Log print action (AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'log_print') {
-    if (isset($_SESSION['userId'])) {
-        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-        $logStmt->execute([$_SESSION['userId'], 18]);
-    }
+    Logger::log($pdo, $_SESSION['userId'] ?? null, 18); // 18 = Print Attendance
     exit;
 }
+
+// --- Place this before any HTML ---
+$show_ent = isset($_GET['show_ent']) ? (int)$_GET['show_ent'] : 10;
+$search = isset($_GET['search_input']) ? trim($_GET['search_input']) : '';
+$view = isset($_GET['view_select']) ? $_GET['view_select'] : 'all';
+$from_date = $_GET['from_date'] ?? '';
+$to_date = $_GET['to_date'] ?? '';
 ?>
 
 <html lang="en">

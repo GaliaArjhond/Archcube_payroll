@@ -1,5 +1,5 @@
 <?php
-// schedule_management.php (or Schedule.php)
+// filepath: c:\xampp\htdocs\Archcube_payroll\includes\Schedule.php
 $pdo = include '../config/database.php';
 session_start();
 
@@ -9,81 +9,121 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// --- HANDLE SCHEDULE TEMPLATE CRUD --
+// --- OOP FUNDAMENTALS: Classes for Schedule Management ---
+
+class ScheduleTemplate
+{
+    private $pdo;
+    public function __construct($pdo) { $this->pdo = $pdo; }
+
+    // Encapsulation: Add a new schedule template
+    public function add($templateName, $workDays, $timeIn, $timeOut, $breakStart, $breakEnd)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO schedule_templates (templateName, workDays, timeIn, timeOut, breakStart, breakEnd) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$templateName, $workDays, $timeIn, $timeOut, $breakStart, $breakEnd]);
+    }
+
+    // Abstraction: Get all templates
+    public function getAll()
+    {
+        return $this->pdo->query("SELECT * FROM schedule_templates ORDER BY templateId DESC")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Abstraction: Delete a template
+    public function delete($templateId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM schedule_templates WHERE templateId = ?");
+        $stmt->execute([$templateId]);
+    }
+}
+
+class EmployeeSchedule
+{
+    private $pdo;
+    public function __construct($pdo) { $this->pdo = $pdo; }
+
+    // Encapsulation: Assign or update schedule
+    public function assign($employeeId, $templateId)
+    {
+        $exists = $this->pdo->prepare("SELECT * FROM employee_schedules WHERE employeeId = ?");
+        $exists->execute([$employeeId]);
+        if ($exists->fetch()) {
+            $stmt = $this->pdo->prepare("UPDATE employee_schedules SET templateId = ?, assignedAt = NOW() WHERE employeeId = ?");
+            $stmt->execute([$templateId, $employeeId]);
+        } else {
+            $stmt = $this->pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
+            $stmt->execute([$employeeId, $templateId]);
+        }
+    }
+
+    // Abstraction: Delete assignment
+    public function delete($employeeScheduleId)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM employee_schedules WHERE employeeScheduleId = ?");
+        $stmt->execute([$employeeScheduleId]);
+    }
+
+    // Abstraction: Get all assignments
+    public function getAll()
+    {
+        return $this->pdo->query(
+            "SELECT es.employeeScheduleId, e.name, st.templateName, st.workDays, st.timeIn, st.timeOut, st.breakStart, st.breakEnd, es.assignedAt
+             FROM employee_schedules es
+             JOIN employees e ON es.employeeId = e.employeeId
+             JOIN schedule_templates st ON es.templateId = st.templateId
+             ORDER BY es.employeeScheduleId DESC"
+        )->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+// --- END OOP FUNDAMENTALS ---
+
+// Instantiate objects
+$templateManager = new ScheduleTemplate($pdo);
+$assignmentManager = new EmployeeSchedule($pdo);
 
 // CREATE template
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_template'])) {
     $templateName = trim($_POST['templateName']);
-    if (empty($templateName)) {
-        die('Template name is required.');
-    }
-
-    if (!isset($_POST['workDays']) || !is_array($_POST['workDays'])) {
-        die('Please select at least one work day.');
-    }
-    $workDays = implode(',', $_POST['workDays']); // now it's an array
-
+    if (empty($templateName)) die('Template name is required.');
+    if (!isset($_POST['workDays']) || !is_array($_POST['workDays'])) die('Please select at least one work day.');
+    $workDays = implode(',', $_POST['workDays']);
     $timeIn = $_POST['timeIn'];
     $timeOut = $_POST['timeOut'];
     $breakStart = $_POST['breakStart'] ?: null;
     $breakEnd = $_POST['breakEnd'] ?: null;
-
-    $stmt = $pdo->prepare("INSERT INTO schedule_templates (templateName, workDays, timeIn, timeOut, breakStart, breakEnd) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$templateName, $workDays, $timeIn, $timeOut, $breakStart, $breakEnd]);
-
+    $templateManager->add($templateName, $workDays, $timeIn, $timeOut, $breakStart, $breakEnd);
     header("Location: Schedule.php?template=created");
     exit();
 }
 
-// --- HANDLE EMPLOYEE SCHEDULE ASSIGNMENT --
+// DELETE template
+if (isset($_GET['delete_template'])) {
+    $templateManager->delete($_GET['delete_template']);
+    header("Location: Schedule.php?template=deleted");
+    exit();
+}
 
 // ASSIGN or UPDATE employee schedule
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_schedule'])) {
     $employeeId = $_POST['employeeId'];
     $templateId = $_POST['templateId'];
-
-    // Check if assignment exists
-    $exists = $pdo->prepare("SELECT * FROM employee_schedules WHERE employeeId = ?");
-    $exists->execute([$employeeId]);
-
-    if ($exists->fetch()) {
-        // Update existing
-        $stmt = $pdo->prepare("UPDATE employee_schedules SET templateId = ?, assignedAt = NOW() WHERE employeeId = ?");
-        $stmt->execute([$templateId, $employeeId]);
-    } else {
-        // Insert new assignment
-        $stmt = $pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
-        $stmt->execute([$employeeId, $templateId]);
-    }
-
+    $assignmentManager->assign($employeeId, $templateId);
     header("Location: Schedule.php?assigned=success");
     exit();
 }
 
 // DELETE employee schedule assignment
 if (isset($_GET['delete_assignment'])) {
-    $stmt = $pdo->prepare("DELETE FROM employee_schedules WHERE employeeScheduleId = ?");
-    $stmt->execute([$_GET['delete_assignment']]);
+    $assignmentManager->delete($_GET['delete_assignment']);
     header("Location: Schedule.php?assignment=deleted");
     exit();
 }
 
 // --- FETCH DATA FOR DISPLAY ---
-
-// Employees for dropdown
 $employees = $pdo->query("SELECT employeeId, name FROM employees ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
-
-// Templates for dropdown and listing
-$templates = $pdo->query("SELECT * FROM schedule_templates ORDER BY templateId DESC")->fetchAll(PDO::FETCH_ASSOC);
-
-// Assignments listing
-$assignments = $pdo->query(
-    "SELECT es.employeeScheduleId, e.name, st.templateName, st.workDays, st.timeIn, st.timeOut, st.breakStart, st.breakEnd, es.assignedAt
-     FROM employee_schedules es
-     JOIN employees e ON es.employeeId = e.employeeId
-     JOIN schedule_templates st ON es.templateId = st.templateId
-     ORDER BY es.employeeScheduleId DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
+$templates = $templateManager->getAll();
+$assignments = $assignmentManager->getAll();
 ?>
 
 <!DOCTYPE html>

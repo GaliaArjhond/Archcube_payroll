@@ -1,4 +1,5 @@
 <?php
+// filepath: c:\xampp\htdocs\Archcube_payroll\includes\dashboard.php
 date_default_timezone_set('Asia/Manila');
 $pdo = include '../config/database.php';
 session_start();
@@ -7,16 +8,143 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-$todayDate = date('Y-m-d');
+class Notification
+{
+    private $pdo;
 
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function add($employeeId, $message, $visibleTo)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO notifications (employeeId, message, notifyDate, visibleTo) VALUES (?, ?, NOW(), ?)");
+        $stmt->execute([$employeeId, $message, $visibleTo]);
+    }
+
+    public function getUnread($userId, $userRole)
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM notifications 
+            WHERE (employeeId IS NULL OR employeeId = ?) 
+            AND (visibleTo = ? OR visibleTo = 'both') 
+            AND isRead = FALSE 
+            ORDER BY notifyDate DESC");
+        $stmt->execute([$userId, $userRole]);
+        return $stmt->fetchAll();
+    }
+
+    public function markAsRead($ids)
+    {
+        if (!empty($ids)) {
+            $idsStr = implode(',', array_map('intval', $ids));
+            $this->pdo->exec("UPDATE notifications SET isRead = 1 WHERE notificationId IN ($idsStr)");
+        }
+    }
+}
+
+class Dashboard
+{
+    private $pdo;
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
+    public function getUpcomingBirthdays()
+    {
+        return $this->pdo->query("
+            SELECT name, DATE_FORMAT(birthDate, '%M %d') AS birthdate 
+            FROM employees 
+            WHERE MONTH(birthDate) = MONTH(CURDATE()) 
+              AND DAY(birthDate) >= DAY(CURDATE())
+            ORDER BY DAY(birthDate)
+            LIMIT 5
+        ")->fetchAll();
+    }
+
+    public function getPendingLeaves()
+    {
+        try {
+            return $this->pdo->query("SELECT COUNT(*) FROM leaves WHERE status = 'pending'")->fetchColumn();
+        } catch (PDOException $e) {
+            return 0;
+        }
+    }
+
+    public function getPendingAdvance()
+    {
+        return $this->pdo->query("SELECT COUNT(*) FROM advancePayments WHERE status = 'pending'")->fetchColumn();
+    }
+
+    public function getRecentDeductions()
+    {
+        return $this->pdo->query("
+            SELECT dt.name AS deductionType, e.name, d.amount, d.createdAt 
+            FROM deductions d
+            JOIN employees e ON d.employeeId = e.employeeId
+            JOIN deductionTypes dt ON d.deductionTypeId = dt.deductionTypeId
+            ORDER BY d.createdAt DESC
+            LIMIT 5
+        ")->fetchAll();
+    }
+
+    public function getRecentAdvances()
+    {
+        return $this->pdo->query("
+            SELECT e.name, a.amount, a.dateRequested, a.status
+            FROM advancePayments a
+            JOIN employees e ON a.employeeId = e.employeeId
+            ORDER BY a.dateRequested DESC
+            LIMIT 5
+        ")->fetchAll();
+    }
+
+    public function getAvgTimeIn($todayDate)
+    {
+        return $this->pdo->query("
+            SELECT AVG(TIME(timeIn)) FROM attendance 
+            WHERE attendanceDate = '$todayDate'
+        ")->fetchColumn();
+    }
+
+    public function getTotalEmployees()
+    {
+        return $this->pdo->query("SELECT COUNT(*) FROM employees")->fetchColumn();
+    }
+
+    public function getOnTimeCount($todayDate)
+    {
+        return $this->pdo->query("
+            SELECT COUNT(DISTINCT employeeId) FROM attendance 
+            WHERE attendanceDate = '$todayDate' AND timeIn <= '09:00:00'
+        ")->fetchColumn();
+    }
+
+    public function getAbsentCount($todayDate)
+    {
+        return $this->pdo->query("
+            SELECT COUNT(*) FROM employees e
+            WHERE NOT EXISTS (
+                SELECT 1 FROM attendance a
+                WHERE a.employeeId = e.employeeId AND a.attendanceDate = '$todayDate'
+            )
+        ")->fetchColumn();
+    }
+}
+
+
+$todayDate = date('Y-m-d');
 $today = new DateTime();
 $tomorrow = $today->modify('+1 day')->format('j');
+
+// Use Notification class for reminders
+$notification = new Notification($pdo);
 
 // Payroll reminders for admin
 if ($tomorrow == 15 || $tomorrow == 30) {
     $adminMessage = "Reminder: Payroll is due tomorrow!";
-    $stmt = $pdo->prepare("INSERT INTO notifications (employeeId, message, notifyDate, visibleTo) VALUES (NULL, ?, NOW(), 'admin')");
-    $stmt->execute([$adminMessage]);
+    $notification->add(null, $adminMessage, 'admin');
 }
 
 // Government contributions due tomorrow for employees
@@ -26,11 +154,10 @@ $contributionsDue = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if ($contributionsDue) {
     $employees = $pdo->query("SELECT employeeId FROM employees")->fetchAll(PDO::FETCH_ASSOC);
-    $insertStmt = $pdo->prepare("INSERT INTO notifications (employeeId, message, notifyDate, visibleTo) VALUES (?, ?, NOW(), 'employee')");
     foreach ($contributionsDue as $contribution) {
         $message = "Reminder: The payment for {$contribution['contributionTypeName']} is due tomorrow.";
         foreach ($employees as $emp) {
-            $insertStmt->execute([$emp['employeeId'], $message]);
+            $notification->add($emp['employeeId'], $message, 'employee');
         }
     }
 }
@@ -39,80 +166,21 @@ $userId = $_SESSION['userId'];
 $userRole = $_SESSION['role'];
 
 // Fetch unread notifications for this admin
-$stmt = $pdo->prepare("SELECT * FROM notifications 
-    WHERE (employeeId IS NULL OR employeeId = ?) 
-    AND (visibleTo = ? OR visibleTo = 'both') 
-    AND isRead = FALSE 
-    ORDER BY notifyDate DESC");
-$stmt->execute([$userId, $userRole]);
-$notifications = $stmt->fetchAll();
+$notifications = $notification->getUnread($userId, $userRole);
 
-// Fetch upcoming birthdays
-$birthdays = $pdo->query("
-    SELECT name, DATE_FORMAT(birthDate, '%M %d') AS birthdate 
-    FROM employees 
-    WHERE MONTH(birthDate) = MONTH(CURDATE()) 
-      AND DAY(birthDate) >= DAY(CURDATE())
-    ORDER BY DAY(birthDate)
-    LIMIT 5
-")->fetchAll();
+// Use Dashboard class for dashboard data
+$dashboard = new Dashboard($pdo);
 
-// Count pending leave requests (set to 0 if table doesn't exist)
-try {
-    $pendingLeaves = $pdo->query("
-        SELECT COUNT(*) FROM leaves 
-        WHERE status = 'pending'
-    ")->fetchColumn();
-} catch (PDOException $e) {
-    $pendingLeaves = 0;
-}
+$birthdays = $dashboard->getUpcomingBirthdays();
+$pendingLeaves = $dashboard->getPendingLeaves();
+$pendingAdvance = $dashboard->getPendingAdvance();
+$recentDeductions = $dashboard->getRecentDeductions();
+$recentAdvances = $dashboard->getRecentAdvances();
+$avgTimeIn = $dashboard->getAvgTimeIn($todayDate);
+$totalEmployees = $dashboard->getTotalEmployees();
+$onTimeCount = $dashboard->getOnTimeCount($todayDate);
+$absentCount = $dashboard->getAbsentCount($todayDate);
 
-// Count pending advance requests
-$pendingAdvance = $pdo->query("
-    SELECT COUNT(*) FROM advancePayments 
-    WHERE status = 'pending'
-")->fetchColumn();
-
-$recentDeductions = $pdo->query("
-    SELECT dt.name AS deductionType, e.name, d.amount, d.createdAt 
-    FROM deductions d
-    JOIN employees e ON d.employeeId = e.employeeId
-    JOIN deductionTypes dt ON d.deductionTypeId = dt.deductionTypeId
-    ORDER BY d.createdAt DESC
-    LIMIT 5
-")->fetchAll();
-
-$recentAdvances = $pdo->query("
-    SELECT e.name, a.amount, a.dateRequested, a.status
-    FROM advancePayments a
-    JOIN employees e ON a.employeeId = e.employeeId
-    ORDER BY a.dateRequested DESC
-    LIMIT 5
-")->fetchAll();
-
-// Calculate average time-in for today
-$avgTimeIn = $pdo->query("
-    SELECT AVG(TIME(timeIn)) FROM attendance 
-    WHERE attendanceDate = '$todayDate'
-")->fetchColumn();
-
-// Total Employees
-$totalEmployees = $pdo->query("SELECT COUNT(*) FROM employees")->fetchColumn();
-
-// On Time Today
-$onTimeCount = $pdo->query("
-    SELECT COUNT(DISTINCT employeeId) FROM attendance 
-    WHERE attendanceDate = '$todayDate' AND timeIn <= '09:00:00'
-")->fetchColumn();
-
-// Absent Today
-$absentCount = $pdo->query("
-    SELECT COUNT(*) FROM employees e
-    WHERE NOT EXISTS (
-        SELECT 1 FROM attendance a
-        WHERE a.employeeId = e.employeeId AND a.attendanceDate = '$todayDate'
-    )
-")->fetchColumn();
 ?>
 
 <html lang="en">
