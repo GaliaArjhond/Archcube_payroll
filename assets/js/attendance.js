@@ -17,6 +17,11 @@ function printAttendance() {
     alert("Attendance table not found.");
     return;
   }
+
+  const today = new Date();
+  const dateString = today.toLocaleDateString();
+  const printTitle = "Archcube Attendance - " + dateString;
+
   const printWindow = window.open("", "", "height=600,width=800");
   printWindow.document.write("<html><head><title>Print Attendance</title>");
   printWindow.document.write("<style>");

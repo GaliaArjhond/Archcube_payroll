@@ -84,12 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'log_print') {
-    if (isset($_SESSION['userId'])) {
-        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-        $logStmt->execute([$_SESSION['userId'], 18]);
-    }
-    exit;
+if (isset($_SESSION['userId'])) {
+    $actionTypeId = 18;
+    $systemlog_stmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+    $systemlog_stmt->execute([$_SESSION['userId'], $actionTypeId]);
 }
 ?>
 
