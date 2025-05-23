@@ -7,47 +7,115 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
   exit();
 }
 
-// Handle edit submission only on POST with employeeId
+// Handle edit submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employeeId'])) {
-  // Sanitize and assign variables
-  $employeeId = $_POST['employeeId'];
-  $name = $_POST['name'] ?? '';
-  $phoneNumber = $_POST['phoneNumber'] ?? '';
-  $positionId = $_POST['positionId'] ?? null;
-  $empStatusId = $_POST['empStatusId'] ?? null;
+  $employeeId = (int)$_POST['employeeId'];
+  $name = trim($_POST['name'] ?? '');
+  $phoneNumber = trim($_POST['phoneNumber'] ?? '');
+  $positionId = isset($_POST['positionId']) ? (int)$_POST['positionId'] : null;
+  $empStatusId = isset($_POST['empStatusId']) ? (int)$_POST['empStatusId'] : null;
+  $payrollTypeId = isset($_POST['payrollTypeId']) ? (int)$_POST['payrollTypeId'] : null;
+  $payrollPeriodID = isset($_POST['payrollPeriodID']) ? (int)$_POST['payrollPeriodID'] : null;
+
+  if (
+    !$employeeId || !$name || !$phoneNumber ||
+    !$positionId || $positionId <= 0 ||
+    !$empStatusId || $empStatusId <= 0 ||
+    !$payrollTypeId || $payrollTypeId <= 0
+  ) {
+    echo "<script>alert('All fields are required.'); window.location.href='user_management2.php';</script>";
+    exit();
+  }
 
   try {
     if (!empty($_FILES['profileImage']['name'])) {
       $targetDir = "../uploads/";
       $fileName = basename($_FILES["profileImage"]["name"]);
       $targetFilePath = $targetDir . $fileName;
-
       if (!move_uploaded_file($_FILES["profileImage"]["tmp_name"], $targetFilePath)) {
         throw new Exception("Failed to upload profile image.");
       }
-
       $profileImagePath = "uploads/" . $fileName;
-
-      $stmt = $pdo->prepare("UPDATE employees SET name = ?, phoneNumber = ?, positionId = ?, empStatusId = ?, profileImage = ? WHERE employeeId = ?");
-      $stmt->execute([$name, $phoneNumber, $positionId, $empStatusId, $profileImagePath, $employeeId]);
+      $stmt = $pdo->prepare("UPDATE employees SET 
+        name = ?, 
+        phoneNumber = ?, 
+        positionId = ?, 
+        empStatusId = ?, 
+        profileImage = ?, 
+        rfidCodeId = ?, 
+        genderId = ?, 
+        birthDate = ?, 
+        civilStatusId = ?, 
+        email = ?, 
+        address = ?, 
+        hiredDate = ?, 
+        role = ?, 
+        payrollTypeId = ?, 
+        updatedAt = NOW() 
+        WHERE employeeId = ?");
+      $stmt->execute([
+        $name,
+        $phoneNumber,
+        $positionId,
+        $empStatusId,
+        $profileImagePath,
+        $_POST['rfidCodeId'] ?? null,
+        $_POST['genderId'] ?? null,
+        $_POST['birthDate'] ?? null,
+        $_POST['civilStatusId'] ?? null,
+        $_POST['email'] ?? null,
+        $_POST['address'] ?? null,
+        $_POST['hiredDate'] ?? null,
+        $_POST['role'] ?? null,
+        $_POST['payrollTypeId'] ?? null,
+        $employeeId
+      ]);
     } else {
-      $stmt = $pdo->prepare("UPDATE employees SET name = ?, phoneNumber = ?, positionId = ?, empStatusId = ? WHERE employeeId = ?");
-      $stmt->execute([$name, $phoneNumber, $positionId, $empStatusId, $employeeId]);
+      $stmt = $pdo->prepare("UPDATE employees SET 
+        name = ?, 
+        phoneNumber = ?, 
+        positionId = ?, 
+        empStatusId = ?, 
+        rfidCodeId = ?, 
+        genderId = ?, 
+        birthDate = ?, 
+        civilStatusId = ?, 
+        email = ?, 
+        address = ?, 
+        hiredDate = ?, 
+        role = ?, 
+        payrollTypeId = ?, 
+        updatedAt = NOW() 
+        WHERE employeeId = ?");
+      $stmt->execute([
+        $name,
+        $phoneNumber,
+        $positionId,
+        $empStatusId,
+        $_POST['rfidCodeId'] ?? null,
+        $_POST['genderId'] ?? null,
+        $_POST['birthDate'] ?? null,
+        $_POST['civilStatusId'] ?? null,
+        $_POST['email'] ?? null,
+        $_POST['address'] ?? null,
+        $_POST['hiredDate'] ?? null,
+        $_POST['role'] ?? null,
+        $_POST['payrollTypeId'] ?? null,
+        $employeeId
+      ]);
     }
 
-    if (isset($_SESSION['userId'])) {
+    if (!empty($_SESSION['userId'])) {
       $actionTypeId = 4;
       $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
       $logStmt->execute([$_SESSION['userId'], $actionTypeId]);
-    } else {
-      error_log("System log insert skipped: userId not found in session.");
     }
 
     echo "<script>alert('Employee updated successfully.'); window.location.href='user_management2.php';</script>";
     exit();
   } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
-    echo "<script>alert('Database error occurred. Please try again later.'); window.location.href='user_management2.php';</script>";
+    echo "<script>alert('Database error: " . addslashes($e->getMessage()) . "'); window.location.href='user_management2.php';</script>";
     exit();
   } catch (Exception $e) {
     error_log("Error: " . $e->getMessage());
@@ -63,8 +131,11 @@ $positions = $stmtPositions->fetchAll(PDO::FETCH_ASSOC);
 $stmtStatuses = $pdo->query("SELECT empStatusId, empStatusName FROM empStatus ORDER BY empStatusName");
 $empStatuses = $stmtStatuses->fetchAll(PDO::FETCH_ASSOC);
 
+$stmtPayrollPeriods = $pdo->query("SELECT payrollTypeId, payrollTypeName FROM payrollType ORDER BY payrollTypeName");
+$payrollPeriods = $stmtPayrollPeriods->fetchAll(PDO::FETCH_ASSOC);
+
 // Filtering logic for employee list display
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search = trim($_GET['search'] ?? '');
 $filter = $_GET['filter'] ?? 'all';
 
 $where = [];
@@ -83,10 +154,21 @@ if ($filter === 'active') {
 
 $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 $stmt = $pdo->prepare("
-  SELECT e.employeeId, e.name, e.phoneNumber, e.profileImage, p.positionName, es.empStatusName, e.positionId, e.empStatusId
+  SELECT e.employeeId, e.name, e.phoneNumber, e.profileImage, 
+         p.positionName, es.empStatusName, 
+         e.rfidCodeId, r.rfidCode, 
+         e.genderId, g.genderName, 
+         e.birthDate, 
+         e.civilStatusId, cs.civilStatusName, 
+         e.email, e.address, e.hiredDate, e.role, 
+         e.payrollPeriodID, pt.payrollTypeName
   FROM employees e
   LEFT JOIN position p ON e.positionId = p.positionId
   LEFT JOIN empStatus es ON e.empStatusId = es.empStatusId
+  LEFT JOIN rfid_cards r ON e.rfidCodeId = r.rfidCodeId
+  LEFT JOIN genderTypes g ON e.genderId = g.genderId
+  LEFT JOIN civilStatus cs ON e.civilStatusId = cs.civilStatusId
+  LEFT JOIN payrollType pt ON e.payrollPeriodID = pt.payrollTypeId
   $whereSql
   ORDER BY e.employeeId DESC
 ");
@@ -155,8 +237,17 @@ $stmt->execute($params);
             <th>ID</th>
             <th>Name</th>
             <th>Contact</th>
+            <th>RFID</th>
+            <th>Gender</th>
+            <th>Birthdate</th>
+            <th>Civil Status</th>
+            <th>Email</th>
+            <th>Address</th>
+            <th>Hired Date</th>
+            <th>Role</th>
             <th>Position</th>
             <th>Status</th>
+            <th>Payroll Period</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -167,20 +258,56 @@ $stmt->execute($params);
             $hasRows = true;
 
             // Prepare JS safe strings for data attributes
+            $jsEmployeeId = htmlspecialchars($row['employeeId']);
             $jsName = htmlspecialchars(addslashes($row['name']));
             $jsPhone = htmlspecialchars(addslashes($row['phoneNumber']));
             $jsProfileImage = htmlspecialchars($row['profileImage']);
+            $jsRfidCodeId = htmlspecialchars($row['rfidCodeId'] ?? '');
+            $jsGenderId = htmlspecialchars($row['genderId'] ?? '');
+            $jsBirthDate = htmlspecialchars($row['birthDate'] ?? '');
+            $jsCivilStatusId = htmlspecialchars($row['civilStatusId'] ?? '');
+            $jsEmail = htmlspecialchars(addslashes($row['email'] ?? ''));
+            $jsAddress = htmlspecialchars(addslashes($row['address'] ?? ''));
+            $jsHiredDate = htmlspecialchars($row['hiredDate'] ?? '');
+            $jsRole = htmlspecialchars($row['role'] ?? '');
+            $jsPositionId = htmlspecialchars($row['positionId'] ?? '');
+            $jsEmpStatusId = htmlspecialchars($row['empStatusId'] ?? '');
+            $jsPayrollTypeId = htmlspecialchars($row['payrollTypeId'] ?? '');
 
             echo "<tr>";
             echo "<td><img src='../" . htmlspecialchars($row['profileImage']) . "' alt='Profile' width='40' height='40' style='border-radius:50%;'></td>";
             echo "<td>" . htmlspecialchars($row['employeeId']) . "</td>";
             echo "<td>" . htmlspecialchars($row['name']) . "</td>";
             echo "<td>" . htmlspecialchars($row['phoneNumber']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['rfidCode'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['genderName'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['birthDate'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['civilStatusName'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['email'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['address'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['hiredDate'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['role'] ?? 'N/A') . "</td>";
             echo "<td>" . htmlspecialchars($row['positionName'] ?? 'N/A') . "</td>";
             echo "<td>" . htmlspecialchars($row['empStatusName'] ?? 'N/A') . "</td>";
+            echo "<td>" . htmlspecialchars($row['payrollTypeName'] ?? 'N/A') . "</td>";
             echo '<td>
                   <button class="editbutton" 
-                    onclick="openOverlay(\'' . htmlspecialchars($row['employeeId']) . '\', \'' . $jsName . '\', \'' . $jsPhone . '\', \'' . ($row['positionId'] ?? '') . '\', \'' . ($row['empStatusId'] ?? '') . '\')">
+                    onclick="openOverlay(
+                      \'' . $jsEmployeeId . '\',
+                      \'' . $jsName . '\',
+                      \'' . $jsRfidCodeId . '\',
+                      \'' . $jsGenderId . '\',
+                      \'' . $jsBirthDate . '\',
+                      \'' . $jsCivilStatusId . '\',
+                      \'' . $jsPhone . '\',
+                      \'' . $jsEmail . '\',
+                      \'' . $jsAddress . '\',
+                      \'' . $jsHiredDate . '\',
+                      \'' . $jsRole . '\',
+                      \'' . $jsPositionId . '\',
+                      \'' . $jsEmpStatusId . '\',
+                      \'' . $jsPayrollTypeId . '\'
+                    )">
                     Edit
                   </button>
                   <button class="deletebutton" onclick="if(confirm(\'Are you sure you want to delete this employee?\')) { window.location.href=\'deleteEmp.php?id=' . urlencode($row['employeeId']) . '\'; }">Delete</button>
@@ -206,26 +333,100 @@ $stmt->execute($params);
 
         <input type="hidden" id="employeeId" name="employeeId">
 
-        <label for="name"><b>Name</b></label>
-        <input type="text" id="name" name="name" required style="width:100%; margin-bottom:8px;">
+        <label for="name">Employee Name:</label>
+        <input type="text" id="name" name="name" required />
 
-        <label for="phoneNumber"><b>Phone Number</b></label>
-        <input type="text" id="phoneNumber" name="phoneNumber" required style="width:100%; margin-bottom:8px;">
+        <label for="rfidCodeId">RFID code:</label>
+        <select id="rfidCodeId" name="rfidCodeId" required>
+          <option value="">-- Select Available RFID --</option>
+          <?php
+          $rfidStmt = $pdo->query("SELECT rfidCodeId, rfidCode FROM rfid_cards WHERE status = 'available'");
+          while ($row = $rfidStmt->fetch()) {
+            echo '<option value="' . htmlspecialchars($row['rfidCodeId']) . '">' . htmlspecialchars($row['rfidCode']) . '</option>';
+          }
+          ?>
+        </select>
 
-        <label for="positionId"><b>Position</b></label>
-        <select id="positionId" name="positionId" required style="width:100%; margin-bottom:8px;">
-          <option value="">Select Position</option>
+        <label for="genderId">Gender:</label>
+        <select id="genderId" name="genderId" required>
+          <option value="">-- Select Gender --</option>
+          <option value="1">Male</option>
+          <option value="2">Female</option>
+          <option value="3">Non-binary</option>
+          <option value="4">Prefer not to say</option>
+          <option value="5">Others</option>
+        </select>
+
+        <label for="birthDate">Birthdate:</label>
+        <input type="date" id="birthDate" name="birthDate" required />
+
+        <label for="civilStatusId">Civil Status:</label>
+        <select name="civilStatusId" id="civilStatusId" required>
+          <option value="">-- Select Status --</option>
+          <option value="1">Single</option>
+          <option value="2">Married</option>
+          <option value="3">Divorced</option>
+          <option value="4">Widowed</option>
+        </select>
+
+
+        <label for="phoneNumber">Contact Number:</label>
+        <input type="text" id="phoneNumber" name="phoneNumber" required />
+
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" required />
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required />
+
+        <h3>Employment Information</h3>
+
+        <label for="hiredDate">Hired Date:</label>
+        <input type="date" id="hiredDate" name="hiredDate" value="<?php echo date('Y-m-d'); ?>" required />
+
+        <label for="role">Role:</label>
+        <select name="role" id="role" required>
+          <option value="">-- Select Role --</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+        </select>
+
+        <label for="positionId">Position:</label>
+        <select name="positionId" id="positionId" required>
+          <option value="">-- Select Position --</option>
           <?php foreach ($positions as $pos): ?>
-            <option value="<?= htmlspecialchars($pos['positionId']) ?>"><?= htmlspecialchars($pos['positionName']) ?></option>
+            <option value="<?= $pos['positionId'] ?>"><?= htmlspecialchars($pos['positionName']) ?></option>
           <?php endforeach; ?>
         </select>
 
-        <label for="empStatusId"><b>Status</b></label>
-        <select id="empStatusId" name="empStatusId" required style="width:100%; margin-bottom:8px;">
-          <option value="">Select Status</option>
+        <label for="empStatusId">Employment Status*:</label>
+        <select name="empStatusId" id="empStatusId" required>
+          <option value="">-- Select Status --</option>
           <?php foreach ($empStatuses as $status): ?>
-            <option value="<?= htmlspecialchars($status['empStatusId']) ?>"><?= htmlspecialchars($status['empStatusName']) ?></option>
+            <option value="<?= $status['empStatusId'] ?>"><?= htmlspecialchars($status['empStatusName']) ?></option>
           <?php endforeach; ?>
+        </select>
+
+        <label for="payrollTypeId">Payroll Period:</label>
+        <select name="payrollTypeId" id="payrollTypeId" required>
+          <option value="">-- Select Payroll Period --</option>
+          <?php
+          $payrollStmt = $pdo->query("
+                    SELECT 
+                    payrollPeriodID, 
+                    cutOffFrom, 
+                    cutOffTo, 
+                    year, 
+                    month,
+                    (SELECT PayrollTypeName FROM payrollType WHERE payrollTypeId = pp.payrollTypeID) AS PayrollTypeName
+                    FROM payrollPeriod pp
+                    ORDER BY payrollPeriodID DESC
+                    ");
+          while ($row = $payrollStmt->fetch()) {
+            $label = "{$row['PayrollTypeName']} | {$row['cutOffFrom']} to {$row['cutOffTo']} ({$row['month']} {$row['year']})";
+            echo '<option value="' . $row['payrollPeriodID'] . '">' . htmlspecialchars($label) . '</option>';
+          }
+          ?>
         </select>
 
         <label for="profileImage"><b>Profile Image</b></label>
