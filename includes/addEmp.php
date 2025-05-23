@@ -12,7 +12,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $defaultPassword = password_hash('changeme', PASSWORD_DEFAULT);
+        $defaultPassword = password_hash('', PASSWORD_DEFAULT);
 
         // Handle photo upload
         $profileImage = 'uploads/default.png'; // default fallback
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Insert into employees
         $stmt = $pdo->prepare("INSERT INTO employees (
             rfidCodeId, name, email, phoneNumber, address, birthDate, role,
-            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollTypeId,
+            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollPeriodID,
             profileImage, createAt, updatedAt
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['employee_civil'],
             $_POST['employee_position'],
             $_POST['employment_status'],
-            $_POST['payroll_type'],
+            $_POST['payroll_Period'],
             $profileImage
         ]);
 
@@ -249,14 +249,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </select>
 
-            <label for="payroll_type">Payroll Type:</label>
-            <select name="payroll_type" id="payroll_type" required>
-                <option value="">-- Select Status --</option>
-                <option value="1">Monthly</option>
-                <option value="2">Semi-Monthly</option>
-                <option value="3">Weekly</option>
-                <option value="4">Daily</option>
+            <label for="payroll_Period">Payroll Period:</label>
+            <select name="payroll_Period" id="payroll_Period" required>
+                <option value="">-- Select Payroll Period --</option>
+                <?php
+                $payrollStmt = $pdo->query("
+                    SELECT 
+                    payrollPeriodID, 
+                    cutOffFrom, 
+                    cutOffTo, 
+                    year, 
+                    month,
+                    (SELECT PayrollTypeName FROM payrollType WHERE payrollTypeId = pp.payrollTypeID) AS PayrollTypeName
+                    FROM payrollPeriod pp
+                    ORDER BY payrollPeriodID DESC
+                    ");
+                while ($row = $payrollStmt->fetch()) {
+                    $label = "{$row['PayrollTypeName']} | {$row['cutOffFrom']} to {$row['cutOffTo']} ({$row['month']} {$row['year']})";
+                    echo '<option value="' . $row['payrollPeriodID'] . '">' . htmlspecialchars($label) . '</option>';
+                }
+                ?>
             </select>
+
 
 
             <label for="basic_salary">Basic Salary:</label>
