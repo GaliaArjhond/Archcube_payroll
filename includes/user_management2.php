@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['employeeId'])) {
 $stmtPositions = $pdo->query("SELECT positionId, positionName FROM position ORDER BY positionName");
 $positions = $stmtPositions->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtStatuses = $pdo->query("SELECT empStatusId, empStatusName FROM empStatus ORDER BY empStatusName");
+$stmtStatuses = $pdo->query("SELECT empStatusId, empStatusName FROM empstatus ORDER BY empStatusName");
 $empStatuses = $stmtStatuses->fetchAll(PDO::FETCH_ASSOC);
 
 $stmtPayrollPeriods = $pdo->query("SELECT payrollTypeId, payrollTypeName FROM payrollType ORDER BY payrollTypeName");

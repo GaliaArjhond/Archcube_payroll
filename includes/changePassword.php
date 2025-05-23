@@ -5,33 +5,34 @@ $pdo = require_once '../config/database.php';
 
 // Check if form is submitted
 if (isset($_POST['changePassword'])) {
-    $userId = $_SESSION['userId']; // assuming you're storing logged-in user ID in session
-    $currentPassword = $_POST['currentPassword'];
-    $newPassword = $_POST['newPassword'];
-    $confirmPassword = $_POST['confirmPassword'];
+  $userId = $_SESSION['userId']; // assuming you're storing logged-in user ID in session
+  $currentPassword = $_POST['currentPassword'];
+  $newPassword = $_POST['newPassword'];
+  $confirmPassword = $_POST['confirmPassword'];
 
-    // Fetch user's current hashed password from DB
-    $stmt = $pdo->prepare("SELECT password FROM users WHERE userId = ?");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
+  // Fetch user's current hashed password from DB
+  $stmt = $pdo->prepare("SELECT password FROM users WHERE userId = ?");
+  $stmt->execute([$userId]);
+  $user = $stmt->fetch();
 
-    if ($user && password_verify($currentPassword, $user['password'])) {
-        if ($newPassword === $confirmPassword) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $updateStmt = $pdo->prepare("UPDATE users SET password = ? WHERE userId = ?");
-            $updateStmt->execute([$hashedPassword, $userId]);
-            $message = "Password updated successfully!";
-        } else {
-            $message = "New passwords do not match.";
-        }
+  if ($user && password_verify($currentPassword, $user['password'])) {
+    if ($newPassword === $confirmPassword) {
+      $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+      $updateStmt = $pdo->prepare("UPDATE users SET password = ? WHERE userId = ?");
+      $updateStmt->execute([$hashedPassword, $userId]);
+      $message = "Password updated successfully!";
     } else {
-        $message = "Incorrect current password.";
+      $message = "New passwords do not match.";
     }
+  } else {
+    $message = "Incorrect current password.";
+  }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Change Password</title>
@@ -92,32 +93,34 @@ if (isset($_POST['changePassword'])) {
     }
   </style>
 </head>
+
 <body>
 
-<div class="change-password-container">
-  <h2>Change Password</h2>
-  <?php if (isset($message)): ?>
-    <div class="status-message"><?= htmlspecialchars($message) ?></div>
-  <?php endif; ?>
-  <form action="" method="POST">
-    <input type="password" name="currentPassword" placeholder="Current Password" required>
-    <input type="password" name="newPassword" placeholder="New Password" required>
-    <input type="password" name="confirmPassword" placeholder="Confirm New Password" required>
-    <button type="submit" name="changePassword">Update Password</button>
-    
-  </form>
+  <div class="change-password-container">
+    <h2>Change Password</h2>
+    <?php if (isset($message)): ?>
+      <div class="status-message"><?= htmlspecialchars($message) ?></div>
+    <?php endif; ?>
+    <form action="" method="POST">
+      <input type="password" name="currentPassword" placeholder="Current Password" required>
+      <input type="password" name="newPassword" placeholder="New Password" required>
+      <input type="password" name="confirmPassword" placeholder="Confirm New Password" required>
+      <button type="submit" name="changePassword">Update Password</button>
 
-  <div style="margin-top: 20px; text-align: right;">
-  <a href="/Archube/Archcube_payroll/includes/dashboard.php" class="btn btn-danger" style="background-color: #dc3545; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
-  ⬅ Back to Dashboard
-</a>
+    </form>
 
-</div>
+    <div style="margin-top: 20px; text-align: right;">
+      <a href="/Archube/Archcube_payroll/includes/dashboard.php" class="btn btn-danger" style="background-color: #dc3545; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">
+        ⬅ Back to Dashboard
+      </a>
 
-  </a>
-</div>
+    </div>
 
-</div>
+    </a>
+  </div>
+
+  </div>
 
 </body>
+
 </html>

@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 $pdo = include '../config/database.php';
 session_start();
 
@@ -33,24 +37,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch payroll types
-$payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollType")->fetchAll(PDO::FETCH_ASSOC);
+$payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrolltype")->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch employees with their payroll period info
-$employees = $pdo->query("
-    SELECT e.*, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year, pt.PayrollTypeName
-    FROM employees e
-    LEFT JOIN payrollPeriod pp ON e.payrollPeriodID = pp.payrollPeriodID
-    LEFT JOIN payrollType pt ON pp.payrollTypeID = pt.PayrollTypeId
-")->fetchAll(PDO::FETCH_ASSOC);
+// Filter employees by payroll type if filter is set
+if (isset($_GET['payrollTypeFilter']) && $_GET['payrollTypeFilter'] !== '') {
+  $payrollTypeId = $_GET['payrollTypeFilter'];
+  $stmt = $pdo->prepare("
+        SELECT e.*, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year, pt.PayrollTypeName
+        FROM employees e
+        LEFT JOIN payrollperiod pp ON e.payrollPeriodID = pp.payrollPeriodID
+        LEFT JOIN payrolltype pt ON pp.payrollTypeID = pt.PayrollTypeId
+        WHERE pp.payrollTypeID = ?
+    ");
+  $stmt->execute([$payrollTypeId]);
+  $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+  // Default: fetch all employees with their payroll period info
+  $employees = $pdo->query("
+        SELECT e.*, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year, pt.PayrollTypeName
+        FROM employees e
+        LEFT JOIN payrollperiod pp ON e.payrollPeriodID = pp.payrollPeriodID
+        LEFT JOIN payrolltype pt ON pp.payrollTypeID = pt.PayrollTypeId
+    ")->fetchAll(PDO::FETCH_ASSOC);
+}
 
 // Filter by payroll period ID if set
 $payrollPeriodID = isset($_GET['payrollPeriodID']) ? $_GET['payrollPeriodID'] : '';
 if ($payrollPeriodID !== '') {
-  $payrollPeriod = $pdo->prepare("SELECT cutOffFrom, cutOffTo FROM payrollPeriod WHERE payrollPeriodID = ?");
+  $payrollPeriod = $pdo->prepare("SELECT cutOffFrom, cutOffTo FROM payrollperiod WHERE payrollPeriodID = ?");
   $payrollPeriod->execute([$payrollPeriodID]);
   $payrollPeriod = $payrollPeriod->fetch(PDO::FETCH_ASSOC);
 } else {
-  $payrollPeriod = $pdo->query("SELECT cutOffFrom, cutOffTo FROM payrollPeriod ORDER BY payrollPeriodID DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+  $payrollPeriod = $pdo->query("SELECT cutOffFrom, cutOffTo FROM payrollperiod ORDER BY payrollPeriodID DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 }
 $cutOffFrom = $payrollPeriod['cutOffFrom'] ?? null;
 $cutOffTo = $payrollPeriod['cutOffTo'] ?? null;
@@ -58,8 +76,8 @@ $cutOffTo = $payrollPeriod['cutOffTo'] ?? null;
 // Fetch all payroll periods for the filter
 $allPeriods = $pdo->query("
     SELECT pp.payrollPeriodID, pt.PayrollTypeName, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year
-    FROM payrollPeriod pp
-    LEFT JOIN payrollType pt ON pp.payrollTypeID = pt.PayrollTypeId
+    FROM payrollperiod pp
+    LEFT JOIN payrolltype pt ON pp.payrollTypeID = pt.PayrollTypeId
     ORDER BY pp.payrollPeriodID DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -76,7 +94,7 @@ if ($payrollPeriodID !== '') {
 
 // Fetch all government contributions for all employees
 $govtContributions = [];
-$stmt = $pdo->query("SELECT employeeId, contributionTypeId, contributionAmount, contributionNumber FROM govtContributions");
+$stmt = $pdo->query("SELECT employeeId, contributionTypeId, contributionAmount, contributionNumber FROM govtcontributions");
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
   $govtContributions[$row['employeeId']][$row['contributionTypeId']] = [
     'amount' => $row['contributionAmount'],
@@ -96,30 +114,25 @@ foreach ($employees as &$emp) {
   if ($cutOffFrom && $cutOffTo) {
     $stmt = $pdo->prepare("
         SELECT
-            SUM(CASE WHEN status = 'On Time' THEN 1 ELSE 0 END) AS presentDays,
+            SUM(CASE WHEN status = 'On Time' THEN 1 ELSE 0 END) AS onTimeDays,
             SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS lateDays,
             SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absences,
             COUNT(*) AS totalDays,
-            SUM(
-                CASE 
-                    WHEN TIME(timeOut) > '18:00:00' THEN 1
-                    ELSE 0
-                END
-            ) AS otDays
+            SUM(CASE WHEN TIME(timeOut) > '18:00:00' THEN 1 ELSE 0 END) AS otDays
         FROM attendance
         WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ?
     ");
     $stmt->execute([$employeeId, $cutOffFrom, $cutOffTo]);
     $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $emp['presentDays'] = $attendance['presentDays'] ?? 0; // On Time
+    $emp['onTimeDays'] = $attendance['onTimeDays'] ?? 0;   // On Time
     $emp['lateDays'] = $attendance['lateDays'] ?? 0;       // Late
     $emp['absences'] = $attendance['absences'] ?? 0;       // Absent
     $emp['totalDays'] = $attendance['totalDays'] ?? 0;
     $emp['otDays'] = $attendance['otDays'] ?? 0;           // Overtime days (if timeOut > 6pm)
-    $emp['workDays'] = $emp['presentDays'] + $emp['lateDays']; // Present + Late = Worked
+    $emp['workDays'] = $emp['onTimeDays'] + $emp['lateDays']; // Present + Late = Worked
   } else {
-    $emp['presentDays'] = 0;
+    $emp['onTimeDays'] = 0;
     $emp['lateDays'] = 0;
     $emp['absences'] = 0;
     $emp['totalDays'] = 0;
@@ -131,8 +144,8 @@ foreach ($employees as &$emp) {
   $emp['basePay'] = $emp['workDays'] * $dailyRate;
   $emp['absenceDeduction'] = $emp['absences'] * $dailyRate;
 
-  // Placeholder values for deductions, overtime, advances, etc.
-  $emp['otPay'] = 0; // Replace with your OT calculation if available
+  $otRate = $dailyRate / 8 * 1.25; // Example: 1.25x hourly rate
+  $emp['otPay'] = $emp['otDays'] * $otRate * 2; // assuming 2 hours OT/day
   $emp['advances'] = 0;
   $emp['otherDeductions'] = 0;
 
@@ -169,6 +182,38 @@ foreach ($employees as &$emp) {
   );
 }
 unset($emp);
+
+/**
+ * Get attendance summary for an employee.
+ * @param PDO $pdo
+ * @param int $employeeId
+ * @param string $fromDate (YYYY-MM-DD)
+ * @param string $toDate (YYYY-MM-DD)
+ * @return array ['onTimeCount' => int, 'workedDays' => int, 'otDays' => int]
+ */
+function getAttendanceSummary($pdo, $employeeId, $fromDate, $toDate)
+{
+  // Count worked days (days with attendance)
+  $stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ?");
+  $stmt->execute([$employeeId, $fromDate, $toDate]);
+  $workedDays = (int)$stmt->fetchColumn();
+
+  // Count on-time days (timeIn <= 09:00:00)
+  $stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ? AND timeIn <= '09:00:00'");
+  $stmt->execute([$employeeId, $fromDate, $toDate]);
+  $onTimeCount = (int)$stmt->fetchColumn();
+
+  // Count OT days (has overtime > 0)
+  $stmt = $pdo->prepare("SELECT COUNT(*) FROM attendance WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ? AND overtime > 0");
+  $stmt->execute([$employeeId, $fromDate, $toDate]);
+  $otDays = (int)$stmt->fetchColumn();
+
+  return [
+    'onTimeCount' => $onTimeCount,
+    'workedDays' => $workedDays,
+    'otDays' => $otDays
+  ];
+}
 ?>
 
 <!DOCTYPE html>
