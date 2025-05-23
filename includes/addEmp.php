@@ -57,21 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Mark RFID as assigned
         $pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$_POST['employee_rfidCodeId']]);
 
-        // Insert government contributions
+        // Insert government contributions (only numbers, amounts will be calculated during payroll)
         $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
         $contributions = [
-            ['type' => 1, 'number' => $_POST['sss_number'], 'amount' => $_POST['sss_contribution']],
-            ['type' => 2, 'number' => $_POST['philhealth_pin'], 'amount' => $_POST['philhealth_contribution']],
-            ['type' => 3, 'number' => $_POST['pagibig_number'], 'amount' => $_POST['pagibig_contribution']],
-            ['type' => 4, 'number' => $_POST['tin_number'], 'amount' => 0],
-            ['type' => 5, 'number' => '', 'amount' => $_POST['withholding_tax']],
+            ['type' => 1, 'number' => $_POST['sss_number']],
+            ['type' => 2, 'number' => $_POST['philhealth_pin']],
+            ['type' => 3, 'number' => $_POST['pagibig_number']],
+            ['type' => 4, 'number' => $_POST['tin_number']],
         ];
         foreach ($contributions as $contribution) {
             $stmt2->execute([
                 $employeeId,
                 $contribution['type'],
                 $contribution['number'],
-                $contribution['amount']
+                0 // Always insert 0 for amount
             ]);
         }
         // Insert into employee_schedules
@@ -281,26 +280,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="sss_number">SSS Number:</label>
             <input type="text" id="sss_number" name="sss_number" required />
 
-            <label for="sss_contribution">SSS Contribution:</label>
-            <input type="text" id="sss_contribution" name="sss_contribution" required />
-
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
             <input type="text" id="philhealth_pin" name="philhealth_pin" required />
-
-            <label for="philhealth_contribution">PhilHealth Contribution:</label>
-            <input type="text" id="philhealth_contribution" name="philhealth_contribution" required />
 
             <label for="pagibig_number">Pag-IBIG Number:</label>
             <input type="text" id="pagibig_number" name="pagibig_number" required />
 
-            <label for="pagibig_contribution">Pag-IBIG Contribution:</label>
-            <input type="text" id="pagibig_contribution" name="pagibig_contribution" required />
-
             <label for="tin_number">TIN:</label>
             <input type="text" id="tin_number" name="tin_number" required />
-
-            <label for="withholding_tax">Withholding Tax:</label>
-            <input type="text" id="withholding_tax" name="withholding_tax" required />
 
             <button type="submit">Submit</button>
         </form>

@@ -20,7 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$employeeId]);
         $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$employee) {
+        if ($employee) {
+            // Set RFID status to 'available'
+            $rfidCode = $employee['rfidCodeId'];
+            $stmt = $pdo->prepare("UPDATE rfid_codes SET status = 'available' WHERE rfidCode = ?");
+            $stmt->execute([$rfidCode]);
+        } else {
             $message = "Employee not found.";
         }
 

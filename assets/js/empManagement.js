@@ -21,7 +21,7 @@ function openOverlay(
   role,
   positionId,
   empStatusId,
-  payrollPeriodID // <-- updated parameter name
+  payrollPeriodID
 ) {
   document.getElementById("employeeId").value = employeeId;
   document.getElementById("name").value = name;
@@ -36,7 +36,7 @@ function openOverlay(
   document.getElementById("role").value = role;
   document.getElementById("positionId").value = positionId;
   document.getElementById("empStatusId").value = empStatusId;
-  document.getElementById("payrollPeriodID").value = payrollPeriodID; // <-- updated field
+  document.getElementById("payrollPeriodID").value = payrollPeriodID;
   document.getElementById("editOverlay").style.display = "flex";
 }
 

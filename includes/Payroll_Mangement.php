@@ -35,55 +35,138 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch payroll types
 $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollType")->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch employees with their payroll period info
+$employees = $pdo->query("
+    SELECT e.*, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year, pt.PayrollTypeName
+    FROM employees e
+    LEFT JOIN payrollPeriod pp ON e.payrollPeriodID = pp.payrollPeriodID
+    LEFT JOIN payrollType pt ON pp.payrollTypeID = pt.PayrollTypeId
+")->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch employees including dailyRate (make sure your employees table has dailyRate or use a default value)
-$employees = $pdo->query("SELECT employeeId, name, IFNULL(dailyRate, 500) AS dailyRate FROM employees")->fetchAll(PDO::FETCH_ASSOC);
-
-// Get latest payroll period cutoffs for attendance calculation
-$payrollPeriod = $pdo->query("SELECT cutOffFrom, cutOffTo FROM payrollPeriod ORDER BY payrollPeriodID DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+// Filter by payroll period ID if set
+$payrollPeriodID = isset($_GET['payrollPeriodID']) ? $_GET['payrollPeriodID'] : '';
+if ($payrollPeriodID !== '') {
+  $payrollPeriod = $pdo->prepare("SELECT cutOffFrom, cutOffTo FROM payrollPeriod WHERE payrollPeriodID = ?");
+  $payrollPeriod->execute([$payrollPeriodID]);
+  $payrollPeriod = $payrollPeriod->fetch(PDO::FETCH_ASSOC);
+} else {
+  $payrollPeriod = $pdo->query("SELECT cutOffFrom, cutOffTo FROM payrollPeriod ORDER BY payrollPeriodID DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+}
 $cutOffFrom = $payrollPeriod['cutOffFrom'] ?? null;
 $cutOffTo = $payrollPeriod['cutOffTo'] ?? null;
+
+// Fetch all payroll periods for the filter
+$allPeriods = $pdo->query("
+    SELECT pp.payrollPeriodID, pt.PayrollTypeName, pp.cutOffFrom, pp.cutOffTo, pp.month, pp.year
+    FROM payrollPeriod pp
+    LEFT JOIN payrollType pt ON pp.payrollTypeID = pt.PayrollTypeId
+    ORDER BY pp.payrollPeriodID DESC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+// Find the selected payroll period details for display and table
+$selectedPeriod = null;
+if ($payrollPeriodID !== '') {
+  foreach ($allPeriods as $period) {
+    if ($period['payrollPeriodID'] == $payrollPeriodID) {
+      $selectedPeriod = $period;
+      break;
+    }
+  }
+}
+
+// Fetch all government contributions for all employees
+$govtContributions = [];
+$stmt = $pdo->query("SELECT employeeId, contributionTypeId, contributionAmount, contributionNumber FROM govtContributions");
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+  $govtContributions[$row['employeeId']][$row['contributionTypeId']] = [
+    'amount' => $row['contributionAmount'],
+    'number' => $row['contributionNumber']
+  ];
+}
+
+// Define your contribution type IDs (adjust if needed)
+define('CONTRIB_SSS', 1);
+define('CONTRIB_PHILHEALTH', 2);
+define('CONTRIB_PAGIBIG', 3);
+define('CONTRIB_WITHHOLD', 4); // If you store withholding tax here
 
 // Calculate payroll details for each employee
 foreach ($employees as &$emp) {
   $employeeId = $emp['employeeId'];
   if ($cutOffFrom && $cutOffTo) {
     $stmt = $pdo->prepare("
-            SELECT
-                COUNT(*) AS totalDays,
-                SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absences,
-                SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS lateDays
-            FROM attendance
-            WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ?
-        ");
+        SELECT
+            SUM(CASE WHEN status = 'On Time' THEN 1 ELSE 0 END) AS presentDays,
+            SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS lateDays,
+            SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absences,
+            COUNT(*) AS totalDays,
+            SUM(
+                CASE 
+                    WHEN TIME(timeOut) > '18:00:00' THEN 1
+                    ELSE 0
+                END
+            ) AS otDays
+        FROM attendance
+        WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ?
+    ");
     $stmt->execute([$employeeId, $cutOffFrom, $cutOffTo]);
     $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    $emp['presentDays'] = $attendance['presentDays'] ?? 0; // On Time
+    $emp['lateDays'] = $attendance['lateDays'] ?? 0;       // Late
+    $emp['absences'] = $attendance['absences'] ?? 0;       // Absent
     $emp['totalDays'] = $attendance['totalDays'] ?? 0;
-    $emp['absences'] = $attendance['absences'] ?? 0;
-    $emp['lateDays'] = $attendance['lateDays'] ?? 0;
+    $emp['otDays'] = $attendance['otDays'] ?? 0;           // Overtime days (if timeOut > 6pm)
+    $emp['workDays'] = $emp['presentDays'] + $emp['lateDays']; // Present + Late = Worked
   } else {
-    $emp['totalDays'] = 0;
-    $emp['absences'] = 0;
+    $emp['presentDays'] = 0;
     $emp['lateDays'] = 0;
+    $emp['absences'] = 0;
+    $emp['totalDays'] = 0;
+    $emp['otDays'] = 0;
+    $emp['workDays'] = 0;
   }
-
-  $emp['workDays'] = $emp['totalDays'] - $emp['absences'];
 
   $dailyRate = $emp['dailyRate'];
   $emp['basePay'] = $emp['workDays'] * $dailyRate;
   $emp['absenceDeduction'] = $emp['absences'] * $dailyRate;
 
   // Placeholder values for deductions, overtime, advances, etc.
-  $emp['otPay'] = 0;
-  $emp['sss'] = 0;
-  $emp['philhealth'] = 0;
-  $emp['pagibig'] = 0;
+  $emp['otPay'] = 0; // Replace with your OT calculation if available
   $emp['advances'] = 0;
   $emp['otherDeductions'] = 0;
 
+  // Use actual government contributions if available, else fallback to calculated/default
+  $emp['sss'] = isset($govtContributions[$employeeId][CONTRIB_SSS]['amount'])
+    ? $govtContributions[$employeeId][CONTRIB_SSS]['amount']
+    : min($emp['basePay'] * 0.045, 900);
+  $emp['sss_number'] = $govtContributions[$employeeId][CONTRIB_SSS]['number'] ?? '';
+
+  $emp['philhealth'] = isset($govtContributions[$employeeId][CONTRIB_PHILHEALTH]['amount'])
+    ? $govtContributions[$employeeId][CONTRIB_PHILHEALTH]['amount']
+    : min($emp['basePay'] * 0.03, 900);
+  $emp['philhealth_number'] = $govtContributions[$employeeId][CONTRIB_PHILHEALTH]['number'] ?? '';
+
+  $emp['pagibig'] = isset($govtContributions[$employeeId][CONTRIB_PAGIBIG]['amount'])
+    ? $govtContributions[$employeeId][CONTRIB_PAGIBIG]['amount']
+    : min($emp['basePay'] * 0.02, 100);
+  $emp['pagibig_number'] = $govtContributions[$employeeId][CONTRIB_PAGIBIG]['number'] ?? '';
+
+  $emp['withholdTax'] = isset($govtContributions[$employeeId][CONTRIB_WITHHOLD]['amount'])
+    ? $govtContributions[$employeeId][CONTRIB_WITHHOLD]['amount']
+    : ($emp['basePay'] * 0.10);
+  $emp['withholdTax_number'] = $govtContributions[$employeeId][CONTRIB_WITHHOLD]['number'] ?? '';
+
   $emp['grossPay'] = $emp['basePay'] + $emp['otPay'];
-  $emp['netPay'] = $emp['grossPay'] - ($emp['sss'] + $emp['philhealth'] + $emp['pagibig'] + $emp['advances'] + $emp['otherDeductions'] + $emp['absenceDeduction']);
+  $emp['netPay'] = $emp['grossPay'] - (
+    $emp['sss'] +
+    $emp['philhealth'] +
+    $emp['pagibig'] +
+    $emp['withholdTax'] +
+    $emp['advances'] +
+    $emp['otherDeductions'] +
+    $emp['absenceDeduction']
+  );
 }
 unset($emp);
 ?>
@@ -140,17 +223,20 @@ unset($emp);
       </div>
       <div class="top">
 
-        <div class="payperiod">
-          <h3>Pay Period:</h3>
-          <select name="payrollTypeFilter" id="payrollTypeFilter" required>
-            <option value="">Select</option>
-            <?php foreach ($payrollTypes as $type): ?>
-              <option value="<?= htmlspecialchars($type['PayrollTypeId']) ?>">
-                <?= htmlspecialchars($type['PayrollTypeName']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
+        <form method="get" style="display:inline;">
+          <div class="payperiod">
+            <h3>Pay Period:</h3>
+            <select name="payrollTypeFilter" id="payrollTypeFilter" required onchange="this.form.submit()">
+              <option value="">Select</option>
+              <?php foreach ($payrollTypes as $type): ?>
+                <option value="<?= htmlspecialchars($type['PayrollTypeId']) ?>"
+                  <?= (isset($_GET['payrollTypeFilter']) && $_GET['payrollTypeFilter'] == $type['PayrollTypeId']) ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($type['PayrollTypeName']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </form>
 
         <div class="top_controls">
           <div class="search_bar">
@@ -168,6 +254,14 @@ unset($emp);
         </div>
       </div>
 
+      <?php if ($selectedPeriod): ?>
+        <div style="margin-bottom:8px;">
+          <strong>Payroll Period:</strong>
+          <?= htmlspecialchars($selectedPeriod['PayrollTypeName']) ?> |
+          <?= htmlspecialchars($selectedPeriod['cutOffFrom']) ?> to <?= htmlspecialchars($selectedPeriod['cutOffTo']) ?> (<?= htmlspecialchars($selectedPeriod['month']) ?> <?= htmlspecialchars($selectedPeriod['year']) ?>)
+        </div>
+      <?php endif; ?>
+
       <div class="employee-table">
         <div class="employee-table-header"></div>
         <table>
@@ -175,14 +269,17 @@ unset($emp);
             <tr>
               <th>Employee ID</th>
               <th>Name</th>
-              <th>Base Pay</th>
-              <th>Work Day</th>
-              <th>Daily Rate</th>
+              <th>Worked Days</th>
+              <th>OT Days</th>
               <th>OT Pay</th>
               <th>Absences</th>
+              <th>Late</th>
+              <th>Base Pay</th>
+              <th>Daily Rate</th>
               <th>SSS</th>
               <th>PhilHealth</th>
               <th>Pag-IBIG</th>
+              <th>Withhold Tax</th>
               <th>Gross</th>
               <th>Advances</th>
               <th>Other Deductions</th>
@@ -195,14 +292,17 @@ unset($emp);
               <tr>
                 <td><?= htmlspecialchars($emp['employeeId']) ?></td>
                 <td><?= htmlspecialchars($emp['name']) ?></td>
-                <td>₱<?= number_format($emp['basePay'], 2) ?></td>
                 <td><?= htmlspecialchars($emp['workDays']) ?></td>
-                <td>₱<?= number_format($emp['dailyRate'], 2) ?></td>
+                <td><?= htmlspecialchars($emp['otDays']) ?></td>
                 <td>₱<?= number_format($emp['otPay'], 2) ?></td>
                 <td><?= htmlspecialchars($emp['absences']) ?></td>
+                <td><?= htmlspecialchars($emp['lateDays']) ?></td>
+                <td>₱<?= number_format($emp['basePay'], 2) ?></td>
+                <td>₱<?= number_format($emp['dailyRate'], 2) ?></td>
                 <td>₱<?= number_format($emp['sss'], 2) ?></td>
                 <td>₱<?= number_format($emp['philhealth'], 2) ?></td>
                 <td>₱<?= number_format($emp['pagibig'], 2) ?></td>
+                <td>₱<?= number_format($emp['withholdTax'], 2) ?></td>
                 <td>₱<?= number_format($emp['grossPay'], 2) ?></td>
                 <td>₱<?= number_format($emp['advances'], 2) ?></td>
                 <td>₱<?= number_format($emp['otherDeductions'], 2) ?></td>
