@@ -1,34 +1,14 @@
 <?php
+$pdo = include '../config/database.php';
 session_start();
 
-$pdo = include '../config/database.php';
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-  header('Location: ../index.php');
-  exit();
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // Check if required fields are set and not empty
   if (
-    isset(
-      $_POST['payrollDate'],
-      $_POST['payrollType'],
-      $_POST['cutoffFrom'],
-      $_POST['cutoffTo'],
-      $_POST['year'],
-      $_POST['month'],
-      $_POST['status'],
-      $_POST['noOfDays']
-    ) &&
-    !empty($_POST['payrollDate']) && !empty($_POST['payrollType']) && !empty($_POST['cutoffFrom']) &&
-    !empty($_POST['cutoffTo']) && !empty($_POST['year']) && !empty($_POST['month']) && !empty($_POST['status'])
+    isset($_POST['payrollDate'], $_POST['payrollType'], $_POST['cutoffFrom'], $_POST['cutoffTo'], $_POST['year'], $_POST['month'], $_POST['status'], $_POST['noOfDays']) &&
+    !empty($_POST['payrollDate']) && !empty($_POST['payrollType']) && !empty($_POST['cutoffFrom']) && !empty($_POST['cutoffTo']) && !empty($_POST['year']) && !empty($_POST['month']) && !empty($_POST['status'])
   ) {
     try {
-      $stmt = $pdo->prepare("INSERT INTO payrollPeriod (
-                payrollTypeID, cutOffFrom, cutOffTo, payrollDate, year, month, noOfDays, status
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-
+      $stmt = $pdo->prepare("INSERT INTO payrollPeriod (payrollTypeID, cutOffFrom, cutOffTo, payrollDate, year, month, noOfDays, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
       $stmt->execute([
         $_POST['payrollType'],
         $_POST['cutoffFrom'],
@@ -39,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_POST['noOfDays'],
         $_POST['status']
       ]);
-
       header("Location: Payroll_Mangement.php?success=Payroll+period+created+successfully");
       exit();
     } catch (PDOException $e) {
@@ -53,14 +32,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-// Fetch employees
-$employees = $pdo->query("SELECT employeeId, name FROM employees")->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch positions
-$positions = $pdo->query("SELECT positionId, positionName FROM position")->fetchAll(PDO::FETCH_ASSOC);
-
 // Fetch payroll types
 $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollType")->fetchAll(PDO::FETCH_ASSOC);
+
+
+// Fetch employees including dailyRate (make sure your employees table has dailyRate or use a default value)
+$employees = $pdo->query("SELECT employeeId, name, IFNULL(dailyRate, 500) AS dailyRate FROM employees")->fetchAll(PDO::FETCH_ASSOC);
+
+// Get latest payroll period cutoffs for attendance calculation
+$payrollPeriod = $pdo->query("SELECT cutOffFrom, cutOffTo FROM payrollPeriod ORDER BY payrollPeriodID DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+$cutOffFrom = $payrollPeriod['cutOffFrom'] ?? null;
+$cutOffTo = $payrollPeriod['cutOffTo'] ?? null;
+
+// Calculate payroll details for each employee
+foreach ($employees as &$emp) {
+  $employeeId = $emp['employeeId'];
+  if ($cutOffFrom && $cutOffTo) {
+    $stmt = $pdo->prepare("
+            SELECT
+                COUNT(*) AS totalDays,
+                SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absences,
+                SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) AS lateDays
+            FROM attendance
+            WHERE employeeId = ? AND attendanceDate BETWEEN ? AND ?
+        ");
+    $stmt->execute([$employeeId, $cutOffFrom, $cutOffTo]);
+    $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $emp['totalDays'] = $attendance['totalDays'] ?? 0;
+    $emp['absences'] = $attendance['absences'] ?? 0;
+    $emp['lateDays'] = $attendance['lateDays'] ?? 0;
+  } else {
+    $emp['totalDays'] = 0;
+    $emp['absences'] = 0;
+    $emp['lateDays'] = 0;
+  }
+
+  $emp['workDays'] = $emp['totalDays'] - $emp['absences'];
+
+  $dailyRate = $emp['dailyRate'];
+  $emp['basePay'] = $emp['workDays'] * $dailyRate;
+  $emp['absenceDeduction'] = $emp['absences'] * $dailyRate;
+
+  // Placeholder values for deductions, overtime, advances, etc.
+  $emp['otPay'] = 0;
+  $emp['sss'] = 0;
+  $emp['philhealth'] = 0;
+  $emp['pagibig'] = 0;
+  $emp['advances'] = 0;
+  $emp['otherDeductions'] = 0;
+
+  $emp['grossPay'] = $emp['basePay'] + $emp['otPay'];
+  $emp['netPay'] = $emp['grossPay'] - ($emp['sss'] + $emp['philhealth'] + $emp['pagibig'] + $emp['advances'] + $emp['otherDeductions'] + $emp['absenceDeduction']);
+}
+unset($emp);
 ?>
 
 <!DOCTYPE html>
@@ -114,38 +139,14 @@ $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollT
         <button class="payperiod_button" onclick="openOverlay()">Create new</button>
       </div>
       <div class="top">
-        <div class="employeeSelect">
-          <h3>Employee:</h3>
-          <select name="employee" id="employee">
-            <option value="all">All</option>
-            <?php foreach ($employees as $emp): ?>
-              <option value="<?= htmlspecialchars($emp['employeeId']) ?>">
-                <?= htmlspecialchars($emp['name']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
 
         <div class="payperiod">
           <h3>Pay Period:</h3>
-          <select name="payrollType" id="payrollType" required>
+          <select name="payrollTypeFilter" id="payrollTypeFilter" required>
             <option value="">Select</option>
             <?php foreach ($payrollTypes as $type): ?>
               <option value="<?= htmlspecialchars($type['PayrollTypeId']) ?>">
                 <?= htmlspecialchars($type['PayrollTypeName']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-
-        <!-- Position Selection -->
-        <div class="positionSelect">
-          <h3>Position:</h3>
-          <select name="position" id="position">
-            <option value="all">All</option>
-            <?php foreach ($positions as $pos): ?>
-              <option value="<?= htmlspecialchars($pos['positionId']) ?>">
-                <?= htmlspecialchars($pos['positionName']) ?>
               </option>
             <?php endforeach; ?>
           </select>
@@ -173,16 +174,16 @@ $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollT
           <thead>
             <tr>
               <th>Employee ID</th>
-              <th>Worker name</th>
-              <th>Day worked</th>
-              <th>OT hours</th>
-              <th>Absences</th>
+              <th>Name</th>
               <th>Base Pay</th>
+              <th>Work Day</th>
+              <th>Daily Rate</th>
               <th>OT Pay</th>
+              <th>Absences</th>
               <th>SSS</th>
               <th>PhilHealth</th>
               <th>Pag-IBIG</th>
-              <th>Withholding Tax</th>
+              <th>Gross</th>
               <th>Advances</th>
               <th>Other Deductions</th>
               <th>Net income</th>
@@ -190,9 +191,25 @@ $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollT
             </tr>
           </thead>
           <tbody>
-            <tr>
-
-            </tr>
+            <?php foreach ($employees as $emp): ?>
+              <tr>
+                <td><?= htmlspecialchars($emp['employeeId']) ?></td>
+                <td><?= htmlspecialchars($emp['name']) ?></td>
+                <td>₱<?= number_format($emp['basePay'], 2) ?></td>
+                <td><?= htmlspecialchars($emp['workDays']) ?></td>
+                <td>₱<?= number_format($emp['dailyRate'], 2) ?></td>
+                <td>₱<?= number_format($emp['otPay'], 2) ?></td>
+                <td><?= htmlspecialchars($emp['absences']) ?></td>
+                <td>₱<?= number_format($emp['sss'], 2) ?></td>
+                <td>₱<?= number_format($emp['philhealth'], 2) ?></td>
+                <td>₱<?= number_format($emp['pagibig'], 2) ?></td>
+                <td>₱<?= number_format($emp['grossPay'], 2) ?></td>
+                <td>₱<?= number_format($emp['advances'], 2) ?></td>
+                <td>₱<?= number_format($emp['otherDeductions'], 2) ?></td>
+                <td>₱<?= number_format($emp['netPay'], 2) ?></td>
+                <td><button>View</button></td>
+              </tr>
+            <?php endforeach; ?>
           </tbody>
         </table>
       </div>
@@ -201,7 +218,7 @@ $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollT
       <div id="payrollOverlay" class="overlay" style="display:none;">
         <div class="overlay-content" style="min-width:350px;">
           <span class="close-btn" onclick="closeOverlay()">&times;</span>
-          <h3 style="margin-top:0;">PAYROLL PERIOD</h3>
+          <h3>PAYROLL PERIOD</h3>
           <form method="POST" action="">
             <label for="payrollDate"><b>Payroll Date</b></label>
             <input type="date" id="payrollDate" name="payrollDate" required style="width:100%;margin-bottom:8px;">
@@ -223,46 +240,21 @@ $payrollTypes = $pdo->query("SELECT PayrollTypeId, PayrollTypeName FROM payrollT
             <input type="date" id="cutoffTo" name="cutoffTo" required style="width:100%;margin-bottom:8px;">
 
             <label for="year"><b>Year</b></label>
-            <input type="number" id="year" name="year" min="2000" max="2100" value="<?= date('Y') ?>" required style="width:100%;margin-bottom:8px;">
+            <input type="number" id="year" name="year" required min="2000" max="2100" style="width:100%;margin-bottom:8px;">
 
             <label for="month"><b>Month</b></label>
-            <select id="month" name="month" required style="width:100%;margin-bottom:8px;">
-              <option value="">Select</option>
-              <?php
-              $months = [
-                "JANUARY",
-                "FEBRUARY",
-                "MARCH",
-                "APRIL",
-                "MAY",
-                "JUNE",
-                "JULY",
-                "AUGUST",
-                "SEPTEMBER",
-                "OCTOBER",
-                "NOVEMBER",
-                "DECEMBER"
-              ];
-              foreach ($months as $m) {
-                echo "<option value=\"$m\">$m</option>";
-              }
-              ?>
-            </select>
+            <input type="text" id="month" name="month" required placeholder="e.g., May" style="width:100%;margin-bottom:8px;">
 
-            <label for="noOfDays"><b>No. of Days</b></label>
-            <input type="number" id="noOfDays" name="noOfDays" min="1" max="31" style="width:100%;margin-bottom:8px;">
+            <label for="noOfDays"><b>Number of Days</b></label>
+            <input type="number" id="noOfDays" name="noOfDays" required min="1" max="31" style="width:100%;margin-bottom:8px;">
 
             <label for="status"><b>Status</b></label>
-            <select id="status" name="status" required style="width:100%;margin-bottom:16px;">
-              <option value="">Select</option>
+            <select id="status" name="status" required style="width:100%;margin-bottom:8px;">
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
 
-            <div style="text-align:right;">
-              <button type="submit" style="background:#2196F3;color:#fff;padding:6px 18px;border:none;border-radius:2px;margin-right:8px;">Save</button>
-              <button type="button" onclick="closeOverlay()" style="background:#eee;padding:6px 18px;border:none;border-radius:2px;">Cancel</button>
-            </div>
+            <input type="submit" value="Create Payroll Period" style="width:100%;padding:8px;">
           </form>
         </div>
       </div>
