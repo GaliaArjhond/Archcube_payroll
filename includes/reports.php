@@ -50,6 +50,62 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
                 <a href="../includes/logout.php" class="logout" onclick="return confirmLogout();">Log Out</a>
             </div>
         </div>
+
+        <div class="main_content">
+        <div class="header">
+            <h2>Summary Reports</h2>
+        </div>
+        <div class="content">
+            <h3>Reports</h3>
+            
+            <table>
+        <thead>
+            <tr>
+                <th>Employee Name</th>
+                <th>Employee ID</th>
+                <th>Base Salary</th>
+                <th>Allowances</th>
+                <th>Deductions</th>
+                <th>Net Pay</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Jane Doe</td>
+                <td>EMP001</td>
+                <td>3,000.00</td>
+                <td>200.00</td>
+                <td>150.00</td>
+                <td>3,050.00</td>
+            </tr>
+            <tr>
+                <td>John Smith</td>
+                <td>EMP002</td>
+                <td>2,800.00</td>
+                <td>180.00</td>
+                <td>120.00</td>
+                <td>2,860.00</td>
+            </tr>
+            <tr>
+                <td>Mary Johnson</td>
+                <td>EMP003</td>
+                <td>3,200.00</td>
+                <td>250.00</td>
+                <td>200.00</td>
+                <td>3,250.00</td>
+            </tr>
+            <!-- Add more employee rows as needed -->
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2">TOTAL</td>
+                <td>9,000.00</td>
+                <td>630.00</td>
+                <td>470.00</td>
+                <td>9,160.00</td>
+            </tr>
+        </tfoot>
+    </table>
     </div>
     <script>
         function confirmLogout() {
