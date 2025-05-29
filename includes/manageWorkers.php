@@ -22,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($employee) {
             // Set RFID status to 'available'
-            $rfidCode = $employee['rfidCodeId'];
-            $stmt = $pdo->prepare("UPDATE rfid_codes SET status = 'available' WHERE rfidCode = ?");
-            $stmt->execute([$rfidCode]);
+            $rfidCodeId = $employee['rfidCodeId'];
+            $stmt = $pdo->prepare("UPDATE rfid_cards SET status = 'available' WHERE rfidCodeId = ?");
+            $stmt->execute([$rfidCodeId]);
         } else {
             $message = "Employee not found.";
         }
@@ -169,18 +169,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3>Actions</h3>
                 <form method="post" action="">
                     <input type="hidden" name="employeeId" value="<?= htmlspecialchars($employee['employeeId']) ?>" />
+                    <input type="button" id="deleteEmployeeBtn" value="Delete Employee" class="delete-btn" />
                     <input type="submit" name="edit" value="Edit Employee" />
-                    <input type="submit" name="delete" value="Delete Employee" onclick="return confirm('Are you sure you want to delete this employee?');" />
+                    <input type="hidden" name="delete" value="1" id="deleteHiddenInput" />
                 </form>
             </div>
         <?php endif; ?>
-    </div>
+    </div> <!-- end main_content -->
 
-    <script>
-        function confirmLogout() {
-            return confirm('Are you sure you want to log out?');
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../assets/js/manageWorkers.js"></script>
 </body>
 
 </html>

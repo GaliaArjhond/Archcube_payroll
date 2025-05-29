@@ -20,6 +20,7 @@ body {
   padding: 20px;
   overflow-y: auto;
   box-shadow: 2px 0 8px rgba(7, 71, 153, 0.08);
+  z-index: 10;
 }
 
 .side_bar h1 {
@@ -64,12 +65,142 @@ body {
 
 .main_content {
   margin-left: 270px; /* Space for the sidebar */
-  padding: 32px 40px;
+  padding: 40px 48px;
   min-height: 100vh;
-  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.07);
+  background: #fff;
   border-radius: 18px 0 0 0;
-  overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(7, 71, 153, 0.07);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 32px;
+}
+
+h2 {
+  font-size: 2rem;
+  color: #074799;
+  margin-bottom: 18px;
+  font-weight: 700;
+}
+
+.alert {
+  background: #eaf6ff;
+  color: #074799;
+  border-left: 5px solid #0563c1;
+  padding: 12px 18px;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}
+
+.select_employee {
+  background: #f9fbfd;
+  padding: 24px 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.06);
+  margin-bottom: 24px;
+  max-width: 420px;
+}
+
+.select_employee label {
+  font-weight: 600;
+  color: #074799;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.select_employee select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #bcd0ea;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.select_employee input[type="submit"] {
+  background: #074799;
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.select_employee input[type="submit"]:hover {
+  background: #0563c1;
+}
+
+.employee_details {
+  background: #f9fbfd;
+  padding: 28px 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.06);
+  max-width: 520px;
+  margin-bottom: 24px;
+}
+
+.employee_details h3 {
+  color: #074799;
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.employee_details p {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  color: #222;
+}
+
+.employee_actions {
+  background: #f9fbfd;
+  padding: 22px 28px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(7, 71, 153, 0.06);
+  max-width: 520px;
+}
+
+.employee_actions h3 {
+  color: #074799;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.employee_actions input[type="submit"] {
+  background: #0563c1;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.employee_actions input[type="submit"]:hover {
+  background: #074799;
+}
+
+.delete-btn {
+  background: #ff4d4d;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #d32f2f;
 }
