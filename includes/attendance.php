@@ -2,6 +2,16 @@
 date_default_timezone_set('Asia/Manila');
 $pdo = include '../config/database.php';
 session_start();
+$currentDate = date('Y-m-d');
+
+// Reset popup/session message if it's a new day
+if (isset($_SESSION['lastAttendanceDate']) && $_SESSION['lastAttendanceDate'] !== $currentDate) {
+    unset($_SESSION['popupMessage']);
+    unset($_SESSION['attendanceStatus']);
+    unset($_SESSION['attendanceEmployeeId']);
+}
+$_SESSION['lastAttendanceDate'] = $currentDate;
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
@@ -17,7 +27,6 @@ $to_date = $_GET['to_date'] ?? '';
 $popupMessage = null; // Initialize popup message variable
 $attendanceStatus = null; // to track attendance status
 $attendanceEmployeeId = null; // to track employeeId for notifications
-$currentDate = date('Y-m-d');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $uid = $_POST['rfidCode'];
@@ -55,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                 }
 
                 $popupMessage = "Check-in recorded for " . htmlspecialchars($employeeName) . ".";
+                $_SESSION['popupMessage'] = $popupMessage;
                 $attendanceStatus = 'Checked In';
                 $attendanceEmployeeId = $employeeId;
             } elseif ($existing && !$existing['timeOut']) {

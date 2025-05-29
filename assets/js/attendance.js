@@ -88,4 +88,20 @@ document.addEventListener("DOMContentLoaded", function () {
   if (window.popupMessageText) {
     showPopup(window.popupMessageText);
   }
+
+  // Reset the form if it's a new day
+  const lastAttendanceDate = localStorage.getItem("lastAttendanceDate");
+  const today = new Date().toISOString().slice(0, 10);
+  if (lastAttendanceDate !== today) {
+    document.getElementById("attendanceForm").reset();
+    localStorage.setItem("lastAttendanceDate", today);
+  }
+
+  // Popup message logic (if you have any)
+  const popup = document.getElementById("popupMessage");
+  if (popup && popup.style.display !== "none") {
+    document.querySelector(".popup-close").onclick = function () {
+      popup.style.display = "none";
+    };
+  }
 });

@@ -27,96 +27,165 @@ $pagibig_number = $_POST['pagibig_number'] ?? '';
 $tin_number = $_POST['tin_number'] ?? '';
 $employee_projectSite = $_POST['employee_projectSite'] ?? '';
 
+$fieldErrors = [];
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        $defaultPassword = password_hash('', PASSWORD_DEFAULT);
+    // Example validation for required fields
+    if (empty($_POST['employee_name'])) {
+        $fieldErrors['employee_name'] = "Employee name is required.";
+    }
+    if (empty($_POST['employee_rfidCodeId'])) {
+        $fieldErrors['employee_rfidCodeId'] = "RFID code is required.";
+    }
+    if (empty($_POST['employee_email'])) {
+        $fieldErrors['employee_email'] = "Email is required.";
+    }
+    if (empty($_POST['employee_contact'])) {
+        $fieldErrors['employee_contact'] = "Contact number is required.";
+    }
+    if (empty($_POST['employee_address'])) {
+        $fieldErrors['employee_address'] = "Address is required.";
+    }
+    if (empty($_POST['employee_birthdate'])) {
+        $fieldErrors['employee_birthdate'] = "Birthdate is required.";
+    }
+    if (empty($_POST['employee_gender'])) {
+        $fieldErrors['employee_gender'] = "Gender is required.";
+    }
+    if (empty($_POST['employee_civil'])) {
+        $fieldErrors['employee_civil'] = "Civil status is required.";
+    }
+    if (empty($_POST['hired_date'])) {
+        $fieldErrors['hired_date'] = "Hired date is required.";
+    }
+    if (empty($_POST['employee_role'])) {
+        $fieldErrors['employee_role'] = "Role is required.";
+    }
+    if (empty($_POST['employee_position'])) {
+        $fieldErrors['employee_position'] = "Position is required.";
+    }
+    if (empty($_POST['employment_status'])) {
+        $fieldErrors['employment_status'] = "Employment status is required.";
+    }
+    if (empty($_POST['templateId'])) {
+        $fieldErrors['templateId'] = "Schedule template is required.";
+    }
+    if (empty($_POST['payroll_Period'])) {
+        $fieldErrors['payroll_Period'] = "Payroll period is required.";
+    }
+    if (empty($_POST['employee_projectSite'])) {
+        $fieldErrors['employee_projectSite'] = "Project site is required.";
+    }
+    if (empty($_POST['basic_salary'])) {
+        $fieldErrors['basic_salary'] = "Basic salary is required.";
+    }
+    if (empty($_POST['sss_number'])) {
+        $fieldErrors['sss_number'] = "SSS number is required.";
+    }
+    if (empty($_POST['philhealth_pin'])) {
+        $fieldErrors['philhealth_pin'] = "PhilHealth ID number (PIN) is required.";
+    }
+    if (empty($_POST['pagibig_number'])) {
+        $fieldErrors['pagibig_number'] = "Pag-IBIG number is required.";
+    }
+    if (empty($_POST['tin_number'])) {
+        $fieldErrors['tin_number'] = "TIN is required.";
+    }
 
-        // Handle photo upload
-        $profileImage = 'uploads/default.png'; // default fallback
-        if (isset($_FILES['employee_photo']) && $_FILES['employee_photo']['error'] === UPLOAD_ERR_OK) {
-            $ext = pathinfo($_FILES['employee_photo']['name'], PATHINFO_EXTENSION);
-            $filename = uniqid('emp_', true) . '.' . $ext;
-            $uploadDir = '../uploads/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0777, true);
+    if (count($fieldErrors) === 0) {
+        try {
+            $defaultPassword = password_hash('', PASSWORD_DEFAULT);
+
+            // Handle photo upload
+            $profileImage = 'uploads/default.png'; // default fallback
+            if (isset($_FILES['employee_photo']) && $_FILES['employee_photo']['error'] === UPLOAD_ERR_OK) {
+                $ext = pathinfo($_FILES['employee_photo']['name'], PATHINFO_EXTENSION);
+                $filename = uniqid('emp_', true) . '.' . $ext;
+                $uploadDir = '../uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                move_uploaded_file($_FILES['employee_photo']['tmp_name'], $uploadDir . $filename);
+                $profileImage = 'uploads/' . $filename;
             }
-            move_uploaded_file($_FILES['employee_photo']['tmp_name'], $uploadDir . $filename);
-            $profileImage = 'uploads/' . $filename;
-        }
 
-        // Insert into employees
-        $stmt = $pdo->prepare("INSERT INTO employees (
-            rfidCodeId, name, email, phoneNumber, address, birthDate, role,
-            genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollPeriodID,
-            projectSiteId, profileImage, createAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            // Insert into employees
+            $stmt = $pdo->prepare("INSERT INTO employees (
+                rfidCodeId, name, email, phoneNumber, address, birthDate, role,
+                genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollPeriodID,
+                projectSiteId, profileImage, createAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
-        $stmt->execute([
-            $_POST['employee_rfidCodeId'],
-            $_POST['employee_name'],
-            $_POST['employee_email'],
-            $_POST['employee_contact'],
-            $_POST['employee_address'],
-            $_POST['employee_birthdate'],
-            $_POST['employee_role'] ?? 'admin',
-            $_POST['employee_gender'],
-            $_POST['hired_date'],
-            $_POST['basic_salary'],
-            $_POST['employee_civil'],
-            $_POST['employee_position'],
-            $_POST['employment_status'],
-            $_POST['payroll_Period'],
-            $_POST['employee_projectSite'],
-            $profileImage
-        ]);
-
-        $employeeId = $pdo->lastInsertId();
-
-        // Mark RFID as assigned
-        $pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$_POST['employee_rfidCodeId']]);
-
-        // Insert government contributions (only numbers, amounts will be calculated during payroll)
-        $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
-        $contributions = [
-            ['type' => 1, 'number' => $_POST['sss_number']],
-            ['type' => 2, 'number' => $_POST['philhealth_pin']],
-            ['type' => 3, 'number' => $_POST['pagibig_number']],
-            ['type' => 4, 'number' => $_POST['tin_number']],
-        ];
-        foreach ($contributions as $contribution) {
-            $stmt2->execute([
-                $employeeId,
-                $contribution['type'],
-                $contribution['number'],
-                0 // Always insert 0 for amount
+            $stmt->execute([
+                $_POST['employee_rfidCodeId'],
+                $_POST['employee_name'],
+                $_POST['employee_email'],
+                $_POST['employee_contact'],
+                $_POST['employee_address'],
+                $_POST['employee_birthdate'],
+                $_POST['employee_role'] ?? 'admin',
+                $_POST['employee_gender'],
+                $_POST['hired_date'],
+                $_POST['basic_salary'],
+                $_POST['employee_civil'],
+                $_POST['employee_position'],
+                $_POST['employment_status'],
+                $_POST['payroll_Period'],
+                $_POST['employee_projectSite'],
+                $profileImage
             ]);
-        }
-        // Insert into employee_schedules
-        $scheduleStmt = $pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
-        $scheduleStmt->execute([
-            $employeeId,
-            $_POST['templateId']
-        ]);
-        $actionTypeId = 3;
-        if (!isset($_SESSION['userId']) || empty($_SESSION['userId'])) {
-            $errorMsg = "Error: User ID missing in session. Cannot log action.";
-        } else {
-            try {
-                $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-                $logStmt->execute([$_SESSION['userId'], $actionTypeId]);
-            } catch (PDOException $e) {
-                $errorMsg = "Log Insert Error: " . $e->getMessage();
-            }
-        }
 
-        $successMsg = "Employee added successfully!";
-    } catch (PDOException $e) {
-        $errorMsg = $e->getMessage();
+            $employeeId = $pdo->lastInsertId();
+
+            // Mark RFID as assigned
+            $pdo->prepare("UPDATE rfid_cards SET status = 'assigned' WHERE rfidCodeId = ?")->execute([$_POST['employee_rfidCodeId']]);
+
+            // Insert government contributions (only numbers, amounts will be calculated during payroll)
+            $stmt2 = $pdo->prepare("INSERT INTO govtContributions (employeeId, contributionTypeId, contributionNumber, contributionAmount) VALUES (?, ?, ?, ?)");
+            $contributions = [
+                ['type' => 1, 'number' => $_POST['sss_number']],
+                ['type' => 2, 'number' => $_POST['philhealth_pin']],
+                ['type' => 3, 'number' => $_POST['pagibig_number']],
+                ['type' => 4, 'number' => $_POST['tin_number']],
+            ];
+            foreach ($contributions as $contribution) {
+                $stmt2->execute([
+                    $employeeId,
+                    $contribution['type'],
+                    $contribution['number'],
+                    0 // Always insert 0 for amount
+                ]);
+            }
+            // Insert into employee_schedules
+            $scheduleStmt = $pdo->prepare("INSERT INTO employee_schedules (employeeId, templateId) VALUES (?, ?)");
+            $scheduleStmt->execute([
+                $employeeId,
+                $_POST['templateId']
+            ]);
+            $actionTypeId = 3;
+            if (!isset($_SESSION['userId']) || empty($_SESSION['userId'])) {
+                $errorMsg = "Error: User ID missing in session. Cannot log action.";
+            } else {
+                try {
+                    $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+                    $logStmt->execute([$_SESSION['userId'], $actionTypeId]);
+                } catch (PDOException $e) {
+                    $errorMsg = "Log Insert Error: " . $e->getMessage();
+                }
+            }
+
+            $successMsg = "Employee added successfully!";
+
+            // On success, reset all sticky variables:
+            $employee_name = $employee_rfidCodeId = $employee_email = $employee_contact = $employee_address = $employee_birthdate = $employee_gender = $employee_civil = $hired_date = $employee_role = $employee_position = $employment_status = $templateId = $payroll_Period = $basic_salary = $sss_number = $philhealth_pin = $pagibig_number = $tin_number = $employee_projectSite = '';
+        } catch (PDOException $e) {
+            $errorMsg = $e->getMessage();
+        }
     }
 }
 ?>
@@ -190,6 +259,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_name">Employee Name:</label>
             <input type="text" id="employee_name" name="employee_name" value="<?php echo htmlspecialchars($employee_name); ?>" required />
 
+            <?php if (!empty($fieldErrors['employee_name'])): ?>
+                <span class="field-error"><?= htmlspecialchars($fieldErrors['employee_name']) ?></span>
+            <?php endif; ?>
+
             <label for="employee_rfidCodeId">RFID code:</label>
             <select id="employee_rfidCodeId" name="employee_rfidCodeId" required>
                 <option value="">-- Select Available RFID --</option>
@@ -201,6 +274,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 ?>
             </select>
+
+            <?php if (isset($fieldErrors['employee_rfidCodeId'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_rfidCodeId']; ?></div>
+            <?php endif; ?>
 
             <label for="employee_gender">Gender:</label>
             <select id="employee_gender" class="employee_gender" name="employee_gender" required>
@@ -229,18 +306,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_contact">Contact Number:</label>
             <input type="text" id="employee_contact" name="employee_contact" value="<?php echo htmlspecialchars($employee_contact); ?>" required />
 
+            <?php if (isset($fieldErrors['employee_contact'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_contact']; ?></div>
+            <?php endif; ?>
+
             <!-- Email -->
             <label for="employee_email">Email:</label>
             <input type="text" id="employee_email" name="employee_email" value="<?php echo htmlspecialchars($employee_email); ?>" required />
+
+            <?php if (isset($fieldErrors['employee_email'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_email']; ?></div>
+            <?php endif; ?>
 
             <!-- Address -->
             <label for="employee_address">Address:</label>
             <input type="text" id="employee_address" name="employee_address" value="<?php echo htmlspecialchars($employee_address); ?>" required />
 
+            <?php if (isset($fieldErrors['employee_address'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_address']; ?></div>
+            <?php endif; ?>
+
             <h3>Employment Information</h3>
 
             <label for="hired_date">Hired Date:</label>
             <input type="date" id="hired_date" name="hired_date" value="<?php echo htmlspecialchars($hired_date); ?>" required />
+
+            <?php if (isset($fieldErrors['hired_date'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['hired_date']; ?></div>
+            <?php endif; ?>
 
             <label for="employee_role">Role:</label>
             <select name="employee_role" id="employee_role">
@@ -248,6 +341,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="admin" <?php if ($employee_role == 'admin') echo 'selected'; ?>>Admin</option>
                 <option value="user" <?php if ($employee_role == 'user') echo 'selected'; ?>>User</option>
             </select>
+
+            <?php if (isset($fieldErrors['employee_role'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_role']; ?></div>
+            <?php endif; ?>
 
             <label for="employee_position">Position:</label>
             <select name="employee_position" id="employee_position" required>
@@ -257,6 +354,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="3" <?php if ($employee_position == '3') echo 'selected'; ?>>Foreman</option>
                 <option value="4" <?php if ($employee_position == '4') echo 'selected'; ?>>Laborer</option>
             </select>
+
+            <?php if (isset($fieldErrors['employee_position'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_position']; ?></div>
+            <?php endif; ?>
 
 
             <label for="employment_status">Employment Status*:</label>
@@ -269,6 +370,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <option value="5" <?php if ($employment_status == '5') echo 'selected'; ?>>Intern</option>
                 <option value="6" <?php if ($employment_status == '6') echo 'selected'; ?>>Terminated</option>
             </select>
+
+            <?php if (isset($fieldErrors['employment_status'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employment_status']; ?></div>
+            <?php endif; ?>
 
             <label for="employee_schedule">Schedule</label>
             <label for="templateId">Schedule Template:</label>
@@ -322,9 +427,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?>
             </select>
 
+            <?php if (isset($fieldErrors['employee_projectSite'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['employee_projectSite']; ?></div>
+            <?php endif; ?>
+
             <!-- Basic Salary -->
             <label for="basic_salary">Basic Salary:</label>
             <input type="number" id="basic_salary" name="basic_salary" value="<?php echo htmlspecialchars($basic_salary); ?>" step="0.01" required />
+
+            <?php if (isset($fieldErrors['basic_salary'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['basic_salary']; ?></div>
+            <?php endif; ?>
 
             <h3>Government Contributions</h3>
 
@@ -332,17 +445,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="sss_number">SSS Number:</label>
             <input type="text" id="sss_number" name="sss_number" value="<?php echo htmlspecialchars($sss_number); ?>" required />
 
+            <?php if (isset($fieldErrors['sss_number'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['sss_number']; ?></div>
+            <?php endif; ?>
+
             <!-- PhilHealth PIN -->
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
             <input type="text" id="philhealth_pin" name="philhealth_pin" value="<?php echo htmlspecialchars($philhealth_pin); ?>" required />
+
+            <?php if (isset($fieldErrors['philhealth_pin'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['philhealth_pin']; ?></div>
+            <?php endif; ?>
 
             <!-- Pag-IBIG Number -->
             <label for="pagibig_number">Pag-IBIG Number:</label>
             <input type="text" id="pagibig_number" name="pagibig_number" value="<?php echo htmlspecialchars($pagibig_number); ?>" required />
 
+            <?php if (isset($fieldErrors['pagibig_number'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['pagibig_number']; ?></div>
+            <?php endif; ?>
+
             <!-- TIN -->
             <label for="tin_number">TIN:</label>
             <input type="text" id="tin_number" name="tin_number" value="<?php echo htmlspecialchars($tin_number); ?>" required />
+
+            <?php if (isset($fieldErrors['tin_number'])): ?>
+                <div class="error-message"><?php echo $fieldErrors['tin_number']; ?></div>
+            <?php endif; ?>
 
             <button type="submit">Submit</button>
         </form>

@@ -177,3 +177,12 @@ h3 {
   color: #1a7f1a;
   border: 1.5px solid #b3ffb3;
 }
+
+.field-error {
+    color: #d32f2f;
+    font-size: 0.95em;
+    margin-left: 8px;
+}
+input:invalid, select:invalid {
+    border-color: #d32f2f;
+}
