@@ -15,18 +15,12 @@ $from_date = $_GET['from_date'] ?? '';
 $to_date = $_GET['to_date'] ?? '';
 
 $popupMessage = null; // Initialize popup message variable
-
-// Log download attendance action
-if (isset($_GET['download_attendance'])) {
-    if (isset($_SESSION['userId'])) {
-        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
-        $logStmt->execute([$_SESSION['userId'], 19]);
-    }
-}
+$attendanceStatus = null; // to track attendance status
+$attendanceEmployeeId = null; // to track employeeId for notifications
+$currentDate = date('Y-m-d');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     $uid = $_POST['rfidCode'];
-    $currentDate = date('Y-m-d');
     $currentTime = date('H:i:s');
 
     // Find the rfidCodeId from rfid_cards
@@ -60,7 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                     $logStmt->execute([$_SESSION['userId'], 20]); // 20 = Check-In
                 }
 
-                $popupMessage = "Check-in recorded for " . addslashes($employeeName) . ".";
+                $popupMessage = "Check-in recorded for " . htmlspecialchars($employeeName) . ".";
+                $attendanceStatus = 'Checked In';
+                $attendanceEmployeeId = $employeeId;
             } elseif ($existing && !$existing['timeOut']) {
                 // Second scan = check out
                 $stmt = $pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
@@ -72,9 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
                     $logStmt->execute([$_SESSION['userId'], 21]); // 21 = Check-Out
                 }
 
-                $popupMessage = "Check-out recorded for " . addslashes($employeeName) . ".";
+                $popupMessage = "Check-out recorded for " . htmlspecialchars($employeeName) . ".";
+                $attendanceStatus = 'Checked Out';
+                $attendanceEmployeeId = $employeeId;
             } else {
-                $popupMessage = $employeeName . " has already checked in and out today.";
+                $popupMessage = htmlspecialchars($employeeName) . " has already checked in and out today.";
             }
         } else {
             $popupMessage = "RFID UID not assigned to any employee.";
@@ -84,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfidCode'])) {
     }
 }
 
+// Optional: log user action every time page loads (keep if needed)
 if (isset($_SESSION['userId'])) {
     $actionTypeId = 18;
     $systemlog_stmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");

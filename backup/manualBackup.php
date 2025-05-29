@@ -34,6 +34,15 @@ if ($return_var !== 0) {
 }
 
 if (file_exists($backupFile)) {
+    // Log the backup download action
+    session_start();
+    if (!empty($_SESSION['userId'])) {
+        // Adjust the path if needed to include your database connection
+        $pdo = include('../config/database.php');
+        $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
+        $logStmt->execute([$_SESSION['userId'], 19]); // 19 = Download Report/Backup
+    }
+
     header('Content-Type: application/octet-stream');
     header('Content-Disposition: attachment; filename="' . basename($backupFile) . '"');
     readfile($backupFile);

@@ -5,6 +5,28 @@ session_start();
 $errorMsg = '';
 $successMsg = '';
 
+// Sticky variables
+$employee_name = $_POST['employee_name'] ?? '';
+$employee_rfidCodeId = $_POST['employee_rfidCodeId'] ?? '';
+$employee_email = $_POST['employee_email'] ?? '';
+$employee_contact = $_POST['employee_contact'] ?? '';
+$employee_address = $_POST['employee_address'] ?? '';
+$employee_birthdate = $_POST['employee_birthdate'] ?? '';
+$employee_gender = $_POST['employee_gender'] ?? '';
+$employee_civil = $_POST['employee_civil'] ?? '';
+$hired_date = $_POST['hired_date'] ?? date('Y-m-d');
+$employee_role = $_POST['employee_role'] ?? '';
+$employee_position = $_POST['employee_position'] ?? '';
+$employment_status = $_POST['employment_status'] ?? '';
+$templateId = $_POST['templateId'] ?? '';
+$payroll_Period = $_POST['payroll_Period'] ?? '';
+$basic_salary = $_POST['basic_salary'] ?? '';
+$sss_number = $_POST['sss_number'] ?? '';
+$philhealth_pin = $_POST['philhealth_pin'] ?? '';
+$pagibig_number = $_POST['pagibig_number'] ?? '';
+$tin_number = $_POST['tin_number'] ?? '';
+$employee_projectSite = $_POST['employee_projectSite'] ?? '';
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     header('Location: ../index.php');
     exit();
@@ -31,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("INSERT INTO employees (
             rfidCodeId, name, email, phoneNumber, address, birthDate, role,
             genderId, hiredDate, basicSalary, civilStatusId, positionId, empStatusId, payrollPeriodID,
-            profileImage, createAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            projectSiteId, profileImage, createAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
 
         $stmt->execute([
             $_POST['employee_rfidCodeId'],
@@ -49,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['employee_position'],
             $_POST['employment_status'],
             $_POST['payroll_Period'],
+            $_POST['employee_projectSite'],
             $profileImage
         ]);
 
@@ -143,6 +166,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="main_content">
         <h2>Add Employee</h2>
+
+        <?php if ($errorMsg): ?>
+            <div class="alert error-alert">
+                <strong>Error:</strong> <?php echo htmlspecialchars($errorMsg); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($successMsg): ?>
+            <div class="alert success-alert">
+                <strong>Success:</strong> <?php echo htmlspecialchars($successMsg); ?>
+            </div>
+        <?php endif; ?>
+
         <form action="" method="post" enctype="multipart/form-data">
             <img id="photoPreview" class="photo-preview" src="assets/img/default-user.png" alt="Photo Preview">
 
@@ -152,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3>Personal Information</h3>
 
             <label for="employee_name">Employee Name:</label>
-            <input type="text" id="employee_name" name="employee_name" required />
+            <input type="text" id="employee_name" name="employee_name" value="<?php echo htmlspecialchars($employee_name); ?>" required />
 
             <label for="employee_rfidCodeId">RFID code:</label>
             <select id="employee_rfidCodeId" name="employee_rfidCodeId" required>
@@ -160,7 +196,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php
                 $rfidStmt = $pdo->query("SELECT rfidCodeId, rfidCode FROM rfid_cards WHERE status = 'available'");
                 while ($row = $rfidStmt->fetch()) {
-                    echo '<option value="' . htmlspecialchars($row['rfidCodeId']) . '">' . htmlspecialchars($row['rfidCode']) . '</option>';
+                    $selected = ($row['rfidCodeId'] == $employee_rfidCodeId) ? 'selected' : '';
+                    echo '<option value="' . htmlspecialchars($row['rfidCodeId']) . '" ' . $selected . '>' . htmlspecialchars($row['rfidCode']) . '</option>';
                 }
                 ?>
             </select>
@@ -168,66 +205,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="employee_gender">Gender:</label>
             <select id="employee_gender" class="employee_gender" name="employee_gender" required>
                 <option value="">-- Select Gender --</option>
-                <option value="1">Male</option>
-                <option value="2">Female</option>
-                <option value="3">Non-binary</option>
-                <option value="4">Prefer not to say</option>
-                <option value="5">Others</option>
+                <option value="1" <?php if ($employee_gender == '1') echo 'selected'; ?>>Male</option>
+                <option value="2" <?php if ($employee_gender == '2') echo 'selected'; ?>>Female</option>
+                <option value="3" <?php if ($employee_gender == '3') echo 'selected'; ?>>Non-binary</option>
+                <option value="4" <?php if ($employee_gender == '4') echo 'selected'; ?>>Prefer not to say</option>
+                <option value="5" <?php if ($employee_gender == '5') echo 'selected'; ?>>Others</option>
             </select>
 
             <label for="employee_birthdate">Birthdate:</label>
-            <input type="date" id="employee_birthdate" name="employee_birthdate" required />
+            <input type="date" id="employee_birthdate" name="employee_birthdate" value="<?php echo htmlspecialchars($employee_birthdate); ?>" required />
 
             <label for="employee_civil">Civil Status:</label>
             <select name="employee_civil" id="employee_civil" required>
                 <option value="">-- Select Status --</option>
-                <option value="1">Single</option>
-                <option value="2">Married</option>
-                <option value="3">Divorced</option>
-                <option value="4">Widowed</option>
+                <option value="1" <?php if ($employee_civil == '1') echo 'selected'; ?>>Single</option>
+                <option value="2" <?php if ($employee_civil == '2') echo 'selected'; ?>>Married</option>
+                <option value="3" <?php if ($employee_civil == '3') echo 'selected'; ?>>Divorced</option>
+                <option value="4" <?php if ($employee_civil == '4') echo 'selected'; ?>>Widowed</option>
             </select>
 
 
+            <!-- Contact Number -->
             <label for="employee_contact">Contact Number:</label>
-            <input type="text" id="employee_contact" name="employee_contact" required />
+            <input type="text" id="employee_contact" name="employee_contact" value="<?php echo htmlspecialchars($employee_contact); ?>" required />
 
+            <!-- Email -->
             <label for="employee_email">Email:</label>
-            <input type="text" id="employee_email" name="employee_email" required />
+            <input type="text" id="employee_email" name="employee_email" value="<?php echo htmlspecialchars($employee_email); ?>" required />
 
+            <!-- Address -->
             <label for="employee_address">Address:</label>
-            <input type="text" id="employee_address" name="employee_address" required />
+            <input type="text" id="employee_address" name="employee_address" value="<?php echo htmlspecialchars($employee_address); ?>" required />
 
             <h3>Employment Information</h3>
 
             <label for="hired_date">Hired Date:</label>
-            <input type="date" id="hired_date" name="hired_date" value="<?php echo date('Y-m-d'); ?>" required />
+            <input type="date" id="hired_date" name="hired_date" value="<?php echo htmlspecialchars($hired_date); ?>" required />
 
             <label for="employee_role">Role:</label>
             <select name="employee_role" id="employee_role">
                 <option value="">-- Select Role --</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
+                <option value="admin" <?php if ($employee_role == 'admin') echo 'selected'; ?>>Admin</option>
+                <option value="user" <?php if ($employee_role == 'user') echo 'selected'; ?>>User</option>
             </select>
 
             <label for="employee_position">Position:</label>
             <select name="employee_position" id="employee_position" required>
                 <option value="">-- Select Status --</option>
-                <option value="1">Architect</option>
-                <option value="2">Engineer</option>
-                <option value="3">Foreman</option>
-                <option value="4">Laborer</option>
+                <option value="1" <?php if ($employee_position == '1') echo 'selected'; ?>>Architect</option>
+                <option value="2" <?php if ($employee_position == '2') echo 'selected'; ?>>Engineer</option>
+                <option value="3" <?php if ($employee_position == '3') echo 'selected'; ?>>Foreman</option>
+                <option value="4" <?php if ($employee_position == '4') echo 'selected'; ?>>Laborer</option>
             </select>
 
 
             <label for="employment_status">Employment Status*:</label>
             <select name="employment_status" id="employment_status" required>
                 <option value="">-- Select Status --</option>
-                <option value="1">Full-Time</option>
-                <option value="2">Part-Time</option>
-                <option value="3">Contractual</option>
-                <option value="4">Probationary</option>
-                <option value="5">Intern</option>
-                <option value="6">Terminated</option>
+                <option value="1" <?php if ($employment_status == '1') echo 'selected'; ?>>Full-Time</option>
+                <option value="2" <?php if ($employment_status == '2') echo 'selected'; ?>>Part-Time</option>
+                <option value="3" <?php if ($employment_status == '3') echo 'selected'; ?>>Contractual</option>
+                <option value="4" <?php if ($employment_status == '4') echo 'selected'; ?>>Probationary</option>
+                <option value="5" <?php if ($employment_status == '5') echo 'selected'; ?>>Intern</option>
+                <option value="6" <?php if ($employment_status == '6') echo 'selected'; ?>>Terminated</option>
             </select>
 
             <label for="employee_schedule">Schedule</label>
@@ -244,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Optionally handle error
                 }
                 foreach ($templates as $tpl): ?>
-                    <option value="<?= $tpl['templateId'] ?>"><?= htmlspecialchars($tpl['templateName']) ?></option>
+                    <option value="<?= $tpl['templateId'] ?>" <?php if ($tpl['templateId'] == $templateId) echo 'selected'; ?>><?= htmlspecialchars($tpl['templateName']) ?></option>
                 <?php endforeach; ?>
             </select>
 
@@ -270,33 +310,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?>
             </select>
 
+            <label for="employee_projectSite">Project Site:</label>
+            <select name="employee_projectSite" id="employee_projectSite" required>
+                <option value="">-- Select Project Site --</option>
+                <?php
+                $siteStmt = $pdo->query("SELECT projectSiteId, siteName FROM projectSites");
+                while ($row = $siteStmt->fetch()) {
+                    $selected = ($row['projectSiteId'] == $employee_projectSite) ? 'selected' : '';
+                    echo '<option value="' . htmlspecialchars($row['projectSiteId']) . '" ' . $selected . '>' . htmlspecialchars($row['siteName']) . '</option>';
+                }
+                ?>
+            </select>
 
-
+            <!-- Basic Salary -->
             <label for="basic_salary">Basic Salary:</label>
-            <input type="number" id="basic_salary" name="basic_salary" step="0.01" required />
+            <input type="number" id="basic_salary" name="basic_salary" value="<?php echo htmlspecialchars($basic_salary); ?>" step="0.01" required />
 
             <h3>Government Contributions</h3>
 
+            <!-- SSS Number -->
             <label for="sss_number">SSS Number:</label>
-            <input type="text" id="sss_number" name="sss_number" required />
+            <input type="text" id="sss_number" name="sss_number" value="<?php echo htmlspecialchars($sss_number); ?>" required />
 
+            <!-- PhilHealth PIN -->
             <label for="philhealth_pin">PhilHealth ID Number (PIN):</label>
-            <input type="text" id="philhealth_pin" name="philhealth_pin" required />
+            <input type="text" id="philhealth_pin" name="philhealth_pin" value="<?php echo htmlspecialchars($philhealth_pin); ?>" required />
 
+            <!-- Pag-IBIG Number -->
             <label for="pagibig_number">Pag-IBIG Number:</label>
-            <input type="text" id="pagibig_number" name="pagibig_number" required />
+            <input type="text" id="pagibig_number" name="pagibig_number" value="<?php echo htmlspecialchars($pagibig_number); ?>" required />
 
+            <!-- TIN -->
             <label for="tin_number">TIN:</label>
-            <input type="text" id="tin_number" name="tin_number" required />
+            <input type="text" id="tin_number" name="tin_number" value="<?php echo htmlspecialchars($tin_number); ?>" required />
 
             <button type="submit">Submit</button>
         </form>
 
-        <?php if ($errorMsg): ?>
-            <div class="alert error-alert">
-                <strong>Error:</strong> <?php echo htmlspecialchars($errorMsg); ?>
-            </div>
-        <?php endif; ?>
         <?php if ($successMsg): ?>
             <div class="alert success-alert">
                 <strong>Success:</strong> <?php echo htmlspecialchars($successMsg); ?>
