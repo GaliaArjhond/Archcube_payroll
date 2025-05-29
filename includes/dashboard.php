@@ -20,7 +20,7 @@ if ($tomorrow == 15 || $tomorrow == 30) {
 }
 
 // Government contributions due tomorrow for employees
-$stmt = $pdo->prepare("SELECT contributionTypeId, contributionTypeName FROM govt_contribution_types WHERE dueDay = ? AND isActive = TRUE");
+$stmt = $pdo->prepare("SELECT contributionTypeId, contributionTypeName FROM govtContributionTypes WHERE dueDay = ? AND isActive = TRUE");
 $stmt->execute([$tomorrow]);
 $contributionsDue = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -69,7 +69,7 @@ try {
 
 // Count pending advance requests
 $pendingAdvance = $pdo->query("
-    SELECT COUNT(*) FROM advance_payments 
+    SELECT COUNT(*) FROM advancePayments 
     WHERE status = 'pending'
 ")->fetchColumn();
 
@@ -84,7 +84,7 @@ $recentDeductions = $pdo->query("
 
 $recentAdvances = $pdo->query("
     SELECT e.name, a.amount, a.dateRequested, a.status
-    FROM advance_payments a
+    FROM advancePayments a
     JOIN employees e ON a.employeeId = e.employeeId
     ORDER BY a.dateRequested DESC
     LIMIT 5

@@ -20,13 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfid_code'])) {
 
     if ($rfidCard) {
         // 2. Find employee
-        $stmt = $pdo->prepare("SELECT employeeId, name FROM employees WHERE rfidCodeId = ?");
+        $stmt = $pdo->prepare("SELECT employeeId, name, profileImageUrl, site FROM employees WHERE rfidCodeId = ?");
         $stmt->execute([$rfidCard['rfidCodeId']]);
         $employee = $stmt->fetch();
 
         if ($employee) {
             $employeeId = $employee['employeeId'];
             $employeeName = $employee['name'];
+            $profileImageUrl = $employee['profileImageUrl'];
+            $employeeSite = $employee['site'];
 
             // 3. Check attendance for today
             $stmt = $pdo->prepare("SELECT * FROM attendance WHERE employeeId = ? AND attendanceDate = ?");
@@ -43,18 +45,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rfid_code'])) {
                     $logStmt->execute([$_SESSION['userId'], 20]); // 20 = Check-In
                 }
 
-                $response = ['success' => true, 'message' => "Check-in recorded for $employeeName."];
+                $response = [
+                    'success' => true,
+                    'message' => "Check-in recorded for $employeeName.",
+                    'name' => $employeeName,
+                    'profile' => $profileImageUrl,
+                    'site' => $employeeSite
+                ];
             } elseif ($attendance && !$attendance['timeOut']) {
 
                 $stmt = $pdo->prepare("UPDATE attendance SET timeOut = ? WHERE attendanceId = ?");
                 $stmt->execute([$currentTime, $attendance['attendanceId']]);
 
-                if (isset($_SESSION['userId'])) {
+                if (!empty($_SESSION['userId'])) {
                     $logStmt = $pdo->prepare("INSERT INTO systemLogs (userId, actionTypeId, timestamp) VALUES (?, ?, NOW())");
                     $logStmt->execute([$_SESSION['userId'], 21]); // 21 = Check-Out
                 }
 
-                $response = ['success' => true, 'message' => "Check-out recorded for $employeeName."];
+                $response = [
+                    'success' => true,
+                    'message' => "Check-out recorded for $employeeName.",
+                    'name' => $employeeName,
+                    'profile' => $profileImageUrl,
+                    'site' => $employeeSite
+                ];
             } else {
                 $response = ['success' => false, 'message' => "$employeeName has already checked in and out today."];
             }

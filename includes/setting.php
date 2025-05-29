@@ -10,12 +10,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Account Settings</title>
     <link rel="stylesheet" href="../assets/css/settingStyle.css" />
 </head>
+
 <body>
     <div class="side_bar">
         <h1>Archcube Payroll</h1>
@@ -121,4 +123,5 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         }
     </script>
 </body>
+
 </html>
