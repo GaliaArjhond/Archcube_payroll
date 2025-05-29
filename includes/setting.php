@@ -114,6 +114,38 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
                     </div>
                 </div>
             </div>
+
+            <div class="settings_card">
+                <div class="settings_card_title"><span>🗄️</span> Backup and Restore</div>
+
+                <!-- Manual Backup -->
+                <div class="settings_row">
+                    <div class="settings_row_info">
+                        <span class="settings_row_title">Download Backup</span>
+                        <span class="settings_row_desc">Create and download a full database backup</span>
+                    </div>
+                    <div class="settings_row_action">
+                        <form action="/backup/manualBackup.php" method="POST">
+                            <button type="submit" class="settings_btn success">Download Backup</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Restore Backup -->
+                <div class="settings_row">
+                    <div class="settings_row_info">
+                        <span class="settings_row_title">Restore Backup</span>
+                        <span class="settings_row_desc">Restore system from an existing .sql backup file</span>
+                    </div>
+                    <div class="settings_row_action">
+                        <form action="/backup/restore.php" method="POST" enctype="multipart/form-data" onsubmit="return confirm('Are you sure you want to restore the database? This will overwrite current data.')">
+                            <input type="file" name="backupFile" accept=".sql" required class="settings_file_input">
+                            <button type="submit" class="settings_btn danger">Restore Database</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
